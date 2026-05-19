@@ -75,8 +75,9 @@ console.log("Focused QA");
 setSequence(app, "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH");
 const groups = app.elements.get("#protectingGroups").innerHTML;
 ["N-Fmoc", "Pbf", "OtBu", "Boc"].forEach((group) => assert.match(groups, new RegExp(group)));
+["main-chain N-terminus", "Arg side chain", "Asp side chain", "Lys side chain"].forEach((site) => assert.match(groups, new RegExp(site)));
 assert.equal(app.elements.get("#protectingGroupCount").textContent, "4");
-console.log("PASS 1 | Protecting groups recognized: N-Fmoc, Pbf, OtBu, Boc");
+console.log("PASS 1 | Protecting groups recognized with sites: N-Fmoc, Pbf, OtBu, Boc");
 
 const protectedMw = numberFrom(app, "#protectedAvg");
 const deprotectedMw = numberFrom(app, "#deprotectedAvg");
@@ -105,3 +106,18 @@ assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
 assert.match(app.elements.get("#riskList").innerHTML, /Unknown protecting group: ABC/);
 assert.match(app.elements.get("#riskLevel").textContent, /High/);
 console.log("PASS 6 | Unknown protecting group reports friendly error: Unknown protecting group: ABC");
+
+setSequence(app, "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys side chain/);
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu side chain/);
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr side chain/);
+assert.match(app.elements.get("#parsedSequence").innerHTML, /AEEA/);
+console.log("PASS 7 | Special residue/linker and side-chain protecting groups recognized: Dde, AEEA, Glu(OtBu), Tyr(tBu)");
+
+setSequence(app, "Fmoc-Aib-Gly-Pyr-OH");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.match(app.elements.get("#parsedSequence").innerHTML, /Aib/);
+assert.match(app.elements.get("#parsedSequence").innerHTML, /Pyr/);
+console.log("PASS 8 | Special amino acids recognized: Aib and Pyr");

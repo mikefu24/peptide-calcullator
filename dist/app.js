@@ -3,32 +3,37 @@ const atomMass = {
   H: { avg: 1.00794, mono: 1.00782503223 },
   F: { avg: 18.998403163, mono: 18.99840316273 },
   Cl: { avg: 35.453, mono: 34.968852682 },
+  Br: { avg: 79.904, mono: 78.9183376 },
   N: { avg: 14.0067, mono: 14.00307400443 },
   O: { avg: 15.9994, mono: 15.99491461957 },
   S: { avg: 32.065, mono: 31.9720711744 },
 };
 
 const residues = {
-  Ala: { code: "A", formula: { C: 3, H: 5, N: 1, O: 1 } },
-  Arg: { code: "R", formula: { C: 6, H: 12, N: 4, O: 1 } },
-  Asn: { code: "N", formula: { C: 4, H: 6, N: 2, O: 2 } },
-  Asp: { code: "D", formula: { C: 4, H: 5, N: 1, O: 3 } },
-  Cys: { code: "C", formula: { C: 3, H: 5, N: 1, O: 1, S: 1 } },
-  Gln: { code: "Q", formula: { C: 5, H: 8, N: 2, O: 2 } },
-  Glu: { code: "E", formula: { C: 5, H: 7, N: 1, O: 3 } },
-  Gly: { code: "G", formula: { C: 2, H: 3, N: 1, O: 1 } },
-  His: { code: "H", formula: { C: 6, H: 7, N: 3, O: 1 } },
-  Ile: { code: "I", formula: { C: 6, H: 11, N: 1, O: 1 } },
-  Leu: { code: "L", formula: { C: 6, H: 11, N: 1, O: 1 } },
-  Lys: { code: "K", formula: { C: 6, H: 12, N: 2, O: 1 } },
-  Met: { code: "M", formula: { C: 5, H: 9, N: 1, O: 1, S: 1 } },
-  Phe: { code: "F", formula: { C: 9, H: 9, N: 1, O: 1 } },
-  Pro: { code: "P", formula: { C: 5, H: 7, N: 1, O: 1 } },
-  Ser: { code: "S", formula: { C: 3, H: 5, N: 1, O: 2 } },
-  Thr: { code: "T", formula: { C: 4, H: 7, N: 1, O: 2 } },
-  Trp: { code: "W", formula: { C: 11, H: 10, N: 2, O: 1 } },
-  Tyr: { code: "Y", formula: { C: 9, H: 9, N: 1, O: 2 } },
-  Val: { code: "V", formula: { C: 5, H: 9, N: 1, O: 1 } },
+  Ala: { code: "A", formula: { C: 3, H: 5, N: 1, O: 1 }, sideChain: "methyl" },
+  Arg: { code: "R", formula: { C: 6, H: 12, N: 4, O: 1 }, sideChain: "guanidino", commonProtections: ["Pbf", "Pmc", "Mtr"] },
+  Asn: { code: "N", formula: { C: 4, H: 6, N: 2, O: 2 }, sideChain: "amide", commonProtections: ["Trt"] },
+  Asp: { code: "D", formula: { C: 4, H: 5, N: 1, O: 3 }, sideChain: "beta-carboxyl", commonProtections: ["OtBu", "OMe", "OBzl", "OAll"] },
+  Cys: { code: "C", formula: { C: 3, H: 5, N: 1, O: 1, S: 1 }, sideChain: "thiol", commonProtections: ["Trt", "Acm", "StBu", "tBu"] },
+  Gln: { code: "Q", formula: { C: 5, H: 8, N: 2, O: 2 }, sideChain: "amide", commonProtections: ["Trt"] },
+  Glu: { code: "E", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-carboxyl", commonProtections: ["OtBu", "OMe", "OBzl", "OAll"] },
+  Gly: { code: "G", formula: { C: 2, H: 3, N: 1, O: 1 }, sideChain: "hydrogen" },
+  His: { code: "H", formula: { C: 6, H: 7, N: 3, O: 1 }, sideChain: "imidazole", commonProtections: ["Trt", "Boc", "Dnp"] },
+  Ile: { code: "I", formula: { C: 6, H: 11, N: 1, O: 1 }, sideChain: "sec-butyl" },
+  Leu: { code: "L", formula: { C: 6, H: 11, N: 1, O: 1 }, sideChain: "isobutyl" },
+  Lys: { code: "K", formula: { C: 6, H: 12, N: 2, O: 1 }, sideChain: "epsilon-amino", commonProtections: ["Boc", "Dde", "ivDde", "Fmoc", "Alloc", "Mtt", "Cbz", "Z"] },
+  Met: { code: "M", formula: { C: 5, H: 9, N: 1, O: 1, S: 1 }, sideChain: "thioether" },
+  Phe: { code: "F", formula: { C: 9, H: 9, N: 1, O: 1 }, sideChain: "benzyl" },
+  Pro: { code: "P", formula: { C: 5, H: 7, N: 1, O: 1 }, sideChain: "secondary amine ring" },
+  Ser: { code: "S", formula: { C: 3, H: 5, N: 1, O: 2 }, sideChain: "hydroxyl", commonProtections: ["tBu", "Bzl", "Ac"] },
+  Thr: { code: "T", formula: { C: 4, H: 7, N: 1, O: 2 }, sideChain: "hydroxyl", commonProtections: ["tBu", "Bzl", "Ac"] },
+  Trp: { code: "W", formula: { C: 11, H: 10, N: 2, O: 1 }, sideChain: "indole", commonProtections: ["Boc", "Formyl"] },
+  Tyr: { code: "Y", formula: { C: 9, H: 9, N: 1, O: 2 }, sideChain: "phenol", commonProtections: ["tBu", "Bzl", "BrZ"] },
+  Val: { code: "V", formula: { C: 5, H: 9, N: 1, O: 1 }, sideChain: "isopropyl" },
+  Aib: { code: "Aib", formula: { C: 4, H: 7, N: 1, O: 1 }, sideChain: "alpha,alpha-dimethyl", special: true },
+  Pyr: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
+  pGlu: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
+  AEEA: { code: "AEEA", formula: { C: 6, H: 11, N: 1, O: 3 }, sideChain: "PEG-like amino acid linker", special: true },
 };
 
 const codeToResidue = Object.fromEntries(
@@ -36,18 +41,30 @@ const codeToResidue = Object.fromEntries(
 );
 
 const groups = {
-  Fmoc: { label: "N-Fmoc", formula: { C: 15, H: 11, O: 2 }, labile: "base" },
-  Boc: { label: "Boc", formula: { C: 5, H: 8, O: 2 }, labile: "acid" },
-  Cbz: { label: "Cbz/Z", formula: { C: 8, H: 7, O: 2 }, labile: "hydrogenolysis" },
-  Z: { label: "Cbz/Z", formula: { C: 8, H: 7, O: 2 }, labile: "hydrogenolysis" },
-  Trt: { label: "Trt", formula: { C: 19, H: 15 }, labile: "acid" },
-  tBu: { label: "tBu", formula: { C: 4, H: 8 }, labile: "acid" },
-  OtBu: { label: "OtBu", formula: { C: 4, H: 8 }, labile: "acid" },
-  Pbf: { label: "Pbf", formula: { C: 13, H: 17, O: 3, S: 1 }, labile: "acid" },
-  Pmc: { label: "Pmc", formula: { C: 12, H: 17, O: 3, S: 1 }, labile: "acid" },
-  Mtt: { label: "Mtt", formula: { C: 20, H: 17, O: 1 }, labile: "acid" },
-  Alloc: { label: "Alloc", formula: { C: 4, H: 5, O: 2 }, labile: "palladium" },
-  Ac: { label: "Ac", formula: { C: 2, H: 2, O: 1 }, labile: "stable" },
+  Fmoc: { label: "Fmoc", formula: { C: 15, H: 11, O: 2 }, labile: "base", class: "N-protecting" },
+  Boc: { label: "Boc", formula: { C: 5, H: 8, O: 2 }, labile: "acid", class: "amine protecting" },
+  Cbz: { label: "Cbz/Z", formula: { C: 8, H: 7, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
+  Z: { label: "Cbz/Z", formula: { C: 8, H: 7, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
+  Trt: { label: "Trt", formula: { C: 19, H: 15 }, labile: "acid", class: "side-chain protecting" },
+  tBu: { label: "tBu", formula: { C: 4, H: 8 }, labile: "acid", class: "hydroxyl protecting" },
+  OtBu: { label: "OtBu", formula: { C: 4, H: 8 }, labile: "acid", class: "carboxyl protecting" },
+  Pbf: { label: "Pbf", formula: { C: 13, H: 17, O: 3, S: 1 }, labile: "acid", class: "guanidino protecting" },
+  Pmc: { label: "Pmc", formula: { C: 12, H: 17, O: 3, S: 1 }, labile: "acid", class: "guanidino protecting" },
+  Mtr: { label: "Mtr", formula: { C: 10, H: 13, O: 3, S: 1 }, labile: "acid", class: "guanidino protecting" },
+  Mtt: { label: "Mtt", formula: { C: 20, H: 17, O: 1 }, labile: "acid", class: "amine protecting" },
+  Dde: { label: "Dde", formula: { C: 10, H: 11, O: 2 }, labile: "hydrazine", class: "orthogonal amine protecting" },
+  ivDde: { label: "ivDde", formula: { C: 14, H: 17, O: 2 }, labile: "hydrazine", class: "orthogonal amine protecting" },
+  Alloc: { label: "Alloc", formula: { C: 4, H: 5, O: 2 }, labile: "palladium", class: "amine protecting" },
+  Ac: { label: "Ac", formula: { C: 2, H: 2, O: 1 }, labile: "stable", class: "acyl modification" },
+  Acm: { label: "Acm", formula: { C: 3, H: 5, N: 1, O: 1 }, labile: "iodine/mercury", class: "thiol protecting" },
+  StBu: { label: "StBu", formula: { C: 4, H: 9, S: 1 }, labile: "reducing", class: "thiol protecting" },
+  Bzl: { label: "Bzl", formula: { C: 7, H: 6 }, labile: "hydrogenolysis/HF", class: "side-chain protecting" },
+  OBzl: { label: "OBzl", formula: { C: 7, H: 6 }, labile: "hydrogenolysis/HF", class: "carboxyl protecting" },
+  OMe: { label: "OMe", formula: { C: 1, H: 2 }, labile: "saponification", class: "carboxyl ester" },
+  OAll: { label: "OAll", formula: { C: 3, H: 4 }, labile: "palladium", class: "carboxyl protecting" },
+  BrZ: { label: "BrZ", formula: { C: 8, H: 6, O: 2 }, labile: "acid/HF", class: "phenol protecting" },
+  Dnp: { label: "Dnp", formula: { C: 6, H: 3, N: 2, O: 4 }, labile: "thiolysis", class: "imidazole protecting" },
+  Formyl: { label: "Formyl", formula: { C: 1, O: 1 }, labile: "base", class: "indole protecting" },
 };
 
 const terminalGroups = {
@@ -73,6 +90,8 @@ const builtInExamples = [
   "Ac-Gly-Gly-Phe-OH",
   "Boc-Ala-Val-Leu-Phe-OMe",
   "Fmoc-Lys(Boc)-Gly-Pro-OH",
+  "Fmoc-Aib-Gly-Pyr-OH",
+  "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
 ];
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
@@ -133,7 +152,7 @@ function formulaMass(formula) {
 }
 
 function formulaToText(formula) {
-  const order = ["C", "H", "F", "Cl", "N", "O", "S"];
+  const order = ["C", "H", "Br", "Cl", "F", "N", "O", "S"];
   return order
     .filter((atom) => formula[atom])
     .map((atom) => `${atom}${formula[atom] === 1 ? "" : Number.isInteger(formula[atom]) ? formula[atom] : formula[atom].toFixed(2)}`)
@@ -155,7 +174,7 @@ function hasBalancedParentheses(input) {
 }
 
 function parseResidue(token) {
-  const match = token.match(/^([A-Za-z]{1,3})(?:\(([^()]*)\))?$/);
+  const match = token.match(/^([A-Za-z]{1,4})(?:\(([^()]*)\))?$/);
   if (!match) return { kind: "invalid", raw: token };
   let name = match[1];
   if (name.length === 1) name = codeToResidue[name.toUpperCase()];
@@ -234,6 +253,20 @@ function parseSequence(input) {
   return { tokens, nTerminal, cTerminal, aa, unknown, unknownMods, errors: [...new Set(errors)] };
 }
 
+function sideChainSiteLabel(residue, index) {
+  const sideChain = residues[residue.name].sideChain || "side chain";
+  return `${index + 1}-${residue.name} side chain (${sideChain})`;
+}
+
+function isCommonResidueProtection(residueName, group) {
+  const allowed = residues[residueName].commonProtections || [];
+  return allowed.includes(group);
+}
+
+function displayProtectingGroup(item) {
+  return item.siteType === "backbone N" && item.group === "Fmoc" ? "N-Fmoc" : item.label;
+}
+
 function calculate(parsed) {
   const deprotectedFormula = cloneFormula(water);
   const protectedFormula = cloneFormula(water);
@@ -245,7 +278,14 @@ function calculate(parsed) {
     residue.mods.forEach((mod) => {
       if (groups[mod]) {
         addFormula(protectedFormula, groups[mod].formula);
-        protectingList.push({ group: mod, site: `${index + 1}-${residue.name}`, ...groups[mod] });
+        protectingList.push({
+          group: mod,
+          site: sideChainSiteLabel(residue, index),
+          siteType: "side-chain",
+          residue: residue.name,
+          commonForResidue: isCommonResidueProtection(residue.name, mod),
+          ...groups[mod],
+        });
       }
     });
   });
@@ -254,7 +294,7 @@ function calculate(parsed) {
     if (groups[group]) {
       addFormula(protectedFormula, groups[group].formula);
       if (groups[group].labile === "stable") addFormula(deprotectedFormula, groups[group].formula);
-      protectingList.push({ group, site: "N-terminus", ...groups[group] });
+      protectingList.push({ group, site: "main-chain N-terminus", siteType: "backbone N", commonForResidue: true, ...groups[group] });
     }
   });
 
@@ -286,6 +326,16 @@ function assessRisks(parsed, calc) {
       risks.push({ level: "high", text: error });
     });
   }
+  calc.protectingList
+    .filter((item) => item.siteType === "side-chain" && !item.commonForResidue)
+    .forEach((item) => {
+      risks.push({ level: "medium", text: `Check protecting group placement: ${item.group} on ${item.residue} side chain is not in the common library.` });
+    });
+  parsed.aa
+    .filter((residue) => residues[residue.name].special)
+    .forEach((residue) => {
+      risks.push({ level: "medium", text: `Special residue detected: ${residue.name}. Confirm coupling method, stereochemistry, and library mass settings.` });
+    });
   if (sequence.includes("DG") || sequence.includes("DS") || sequence.includes("DT")) {
     risks.push({ level: "medium", text: "Asp-Gly/Asp-Ser/Asp-Thr 片段需关注 aspartimide（天冬酰亚胺）副反应。" });
   }
@@ -442,7 +492,7 @@ function render() {
           <span class="sequence-index">${index + 1}</span>
           <span class="sequence-name">${aa.name} (${aa.code})</span>
           <span class="sequence-mods ${aa.mods.some((mod) => !groups[mod]) ? "error" : ""}">
-            ${aa.mods.length ? aa.mods.join(", ") : "无侧链保护"}
+            ${aa.mods.length ? `side chain: ${aa.mods.join(", ")}` : "无侧链保护"}
           </span>
         </li>
       `,
@@ -451,7 +501,7 @@ function render() {
 
   els.protectingGroups.innerHTML = calc.protectingList.length
     ? calc.protectingList
-        .map((item) => `<span class="tag">${item.label}<small>${item.site}</small></span>`)
+        .map((item) => `<span class="tag">${displayProtectingGroup(item)}<small>${item.site}</small></span>`)
         .join("")
     : `<span class="tag">无保护基</span>`;
 
@@ -464,7 +514,7 @@ function render() {
   els.riskLevel.textContent = topRisk;
 
   const protectionRows = calc.protectingList.length
-    ? calc.protectingList.map((item) => `- ${item.label} @ ${item.site} (${item.labile})`).join("\n")
+    ? calc.protectingList.map((item) => `- ${displayProtectingGroup(item)} @ ${item.site} (${item.class}; ${item.labile})`).join("\n")
     : "- 无";
 
   const riskRows = risks.map((risk) => `- [${risk.level}] ${risk.text}`).join("\n");

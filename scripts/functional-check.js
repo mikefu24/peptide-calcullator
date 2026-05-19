@@ -7,6 +7,8 @@ const sequences = [
   "H-Arg-Gly-Asp-Phe-Lys-NH2",
   "Ac-Gly-Gly-Phe-OH",
   "Fmoc-Lys(Boc)-Gly-Pro-OH",
+  "Fmoc-Aib-Gly-Pyr-OH",
+  "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
 ];
 
 class Element {

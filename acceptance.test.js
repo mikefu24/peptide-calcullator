@@ -97,6 +97,8 @@ function bootApp() {
     "Ac-Gly-Gly-Phe-OH",
     "Boc-Ala-Val-Leu-Phe-OMe",
     "Fmoc-Lys(Boc)-Gly-Pro-OH",
+    "Fmoc-Aib-Gly-Pyr-OH",
+    "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
   ];
   examples.forEach((example) => assert.match(fs.readFileSync("app.js", "utf8"), new RegExp(example.replace(/[()]/g, "\\$&"))));
   assert.match(css, /prefers-color-scheme:\s*dark/);
@@ -120,8 +122,24 @@ function bootApp() {
   assert.match(app.elements.get("#protectingGroups").innerHTML, /Pbf/);
   assert.match(app.elements.get("#protectingGroups").innerHTML, /OtBu/);
   assert.match(app.elements.get("#protectingGroups").innerHTML, /Boc/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /main-chain N-terminus/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Arg side chain/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Asp side chain/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys side chain/);
   assert.notEqual(app.elements.get("#protectedAvg").textContent, "--");
   assert.notEqual(app.elements.get("#deprotectedAvg").textContent, "--");
+
+  app.setSequence("Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu side chain/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr side chain/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /AEEA/);
+
+  app.setSequence("Fmoc-Aib-Gly-Pyr-OH");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /Aib/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /Pyr/);
 
   app.setSequence("Fmoc-Arg(ABC)-Gly-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
