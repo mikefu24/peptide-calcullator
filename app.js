@@ -71,12 +71,14 @@ const groups = {
   BrZ: { label: "BrZ", formula: { C: 8, H: 5, Br: 1, O: 2 }, labile: "acid/HF", class: "phenol protecting" },
   Dnp: { label: "Dnp", formula: { C: 6, H: 2, N: 2, O: 4 }, labile: "thiolysis", class: "imidazole protecting" },
   Formyl: { label: "Formyl", formula: { C: 1, O: 1 }, labile: "base", class: "indole protecting" },
-  C18Diacid: { label: "C18 diacid", formula: { C: 18, H: 31, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
-  C20Diacid: { label: "C20 diacid", formula: { C: 20, H: 35, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
-  Octadecanedioyl: { label: "C18 diacid", formula: { C: 18, H: 31, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
-  Eicosanedioyl: { label: "C20 diacid", formula: { C: 20, H: 35, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
-  "C20-OtBu": { label: "C20-OtBu", formula: { C: 24, H: 44, O: 3 }, deprotectedFormula: { C: 20, H: 35, O: 3 }, labile: "acid", class: "albumin-binding lipid ester" },
-  "C18-OtBu": { label: "C18-OtBu", formula: { C: 22, H: 40, O: 3 }, deprotectedFormula: { C: 18, H: 31, O: 3 }, labile: "acid", class: "albumin-binding lipid ester" },
+  C18: { label: "C18 diacid residue", formula: { C: 18, H: 32, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
+  C20: { label: "C20 diacid residue", formula: { C: 20, H: 36, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
+  C18Diacid: { label: "C18 diacid residue", formula: { C: 18, H: 32, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
+  C20Diacid: { label: "C20 diacid residue", formula: { C: 20, H: 36, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
+  Octadecanedioyl: { label: "C18 diacid residue", formula: { C: 18, H: 32, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
+  Eicosanedioyl: { label: "C20 diacid residue", formula: { C: 20, H: 36, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
+  "C20-OtBu": { label: "C20-OtBu", formula: { C: 24, H: 44, O: 3 }, deprotectedFormula: { C: 20, H: 36, O: 3 }, labile: "acid", class: "albumin-binding diacid tert-butyl ester" },
+  "C18-OtBu": { label: "C18-OtBu", formula: { C: 22, H: 40, O: 3 }, deprotectedFormula: { C: 18, H: 32, O: 3 }, labile: "acid", class: "albumin-binding diacid tert-butyl ester" },
   DOTA: { label: "DOTA", formula: { C: 16, H: 25, N: 4, O: 7 }, labile: "stable", class: "chelator" },
   NOTA: { label: "NOTA", formula: { C: 12, H: 20, N: 4, O: 5 }, labile: "stable", class: "chelator" },
   DTPA: { label: "DTPA", formula: { C: 14, H: 20, N: 3, O: 9 }, labile: "stable", class: "chelator" },
@@ -113,6 +115,7 @@ const builtInExamples = [
   "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
   "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
   "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
+  "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
   "DOTA-Lys-Gly-OH",
 ];
 const themeStorageKey = "protected-peptide-theme";
@@ -459,7 +462,7 @@ function assessRisks(parsed, calc) {
       risks.push({ level: "medium", text: `Check protecting group placement: ${item.group} on ${item.residue} side chain is not in the common library.` });
     });
   calc.protectingList
-    .filter((item) => item.class?.startsWith("albumin-binding lipid"))
+    .filter((item) => item.class?.startsWith("albumin-binding"))
     .forEach((item) => {
       risks.push({ level: "medium", text: `Lipidated long-acting peptide motif detected: ${item.group} at ${item.site}. Confirm linker chain, salt form, and exact supplier building block.` });
     });

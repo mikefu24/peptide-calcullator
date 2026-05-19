@@ -168,14 +168,27 @@ setSequence(app, "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.equal(app.elements.get("#protectedFormula").textContent, "C66H105N5O16");
 assert.equal(app.elements.get("#protectedAvg").textContent, "1224.5836");
+assert.equal(app.elements.get("#deprotectedFormula").textContent, "C43H79N5O14");
+assert.equal(app.elements.get("#deprotectedAvg").textContent, "890.1254");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C20-OtBu/);
 assert.match(app.elements.get("#protectingGroups").innerHTML, /AEEA/);
 assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
-console.log("PASS 16 | Tirzepatide protected side-chain chain formula passed: C66H105N5O16, MW 1224.5836");
+console.log("PASS 16 | Tirzepatide protected/deprotected side-chain chain formula passed: C66H105N5O16 -> C43H79N5O14");
+
+setSequence(app, "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C56H86N4O13");
+assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H68N4O11");
+assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid residue/);
+setSequence(app, "H-Lys(C20Diacid)-OH");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C26H50N2O5");
+setSequence(app, "H-Lys(C18Diacid)-OH");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C24H46N2O5");
+console.log("PASS 17 | C20/C18 diacid residues recognized as lipid acid residues, not generic protecting groups");
 
 ["DOTA-Lys-Gly-OH", "NOTA-Lys-Gly-OH", "DTPA-Lys-Gly-OH", "Hynic-Lys-Gly-OH"].forEach((sequence) => {
   setSequence(app, sequence);
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析", sequence);
   assert.notEqual(app.elements.get("#protectedAvg").textContent, "--", sequence);
 });
-console.log("PASS 17 | Chelator motifs recognized: DOTA, NOTA, DTPA, Hynic");
+console.log("PASS 18 | Chelator motifs recognized: DOTA, NOTA, DTPA, Hynic");

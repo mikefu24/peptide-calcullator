@@ -107,6 +107,7 @@ function bootApp() {
     "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
     "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
     "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
+    "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
     "DOTA-Lys-Gly-OH",
   ];
   examples.forEach((example) => assert.match(fs.readFileSync("app.js", "utf8"), new RegExp(escapeRegExp(example))));
@@ -196,10 +197,23 @@ function bootApp() {
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.equal(app.elements.get("#protectedFormula").textContent, "C66H105N5O16");
   assert.equal(app.elements.get("#protectedAvg").textContent, "1224.5836");
+  assert.equal(app.elements.get("#deprotectedFormula").textContent, "C43H79N5O14");
+  assert.equal(app.elements.get("#deprotectedAvg").textContent, "890.1254");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /C20-OtBu/);
   assert.match(app.elements.get("#protectingGroups").innerHTML, /AEEA/);
   assert.match(app.elements.get("#parsedSequence").innerHTML, /side-chain chain: C20-OtBu-Glu\(OtBu\)-AEEA-AEEA/);
   assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+
+  app.setSequence("Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C56H86N4O13");
+  assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H68N4O11");
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid residue/);
+
+  app.setSequence("H-Lys(C20Diacid)-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C26H50N2O5");
+  app.setSequence("H-Lys(C18Diacid)-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C24H46N2O5");
 
   ["DOTA-Lys-Gly-OH", "NOTA-Lys-Gly-OH", "DTPA-Lys-Gly-OH", "Hynic-Lys-Gly-OH"].forEach((sequence) => {
     app.setSequence(sequence);
