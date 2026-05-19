@@ -21,8 +21,6 @@ const js = fs.readFileSync("app.js", "utf8");
   'id="sequenceInput"',
   'id="calculateButton"',
   'id="copyReport"',
-  'id="exportCsv"',
-  'id="exportPdf"',
   'id="exampleSelect"',
 ].forEach((needle) => {
   if (!html.includes(needle)) {

@@ -91,9 +91,11 @@ function bootApp() {
 (async () => {
   const html = fs.readFileSync("index.html", "utf8");
   const css = fs.readFileSync("styles.css", "utf8");
-  ["Calculate", "Clear", "Copy Result", "Export CSV", "Export PDF", "Load Example"].forEach((label) => {
+  ["Calculate", "Clear", "Copy Result", "Load Example"].forEach((label) => {
     assert.match(html, new RegExp(`>${label}<`));
   });
+  assert.doesNotMatch(html, />Export CSV</);
+  assert.doesNotMatch(html, />Export PDF</);
   assert.match(html, /id="themeSelect"/);
   const examples = [
     "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",

@@ -10,7 +10,7 @@
     <main class="app-shell">
       <header class="app-header">
         <div>
-          <p class="kicker">Professional Laboratory Tool</p>
+          <p class="kicker">Peptide synthesis R&D</p>
           <h1>Protected Peptide Calculator</h1>
         </div>
         <label class="theme-control">
@@ -25,7 +25,7 @@
 
       <section class="calculator-layout">
         <section class="input-column" aria-label="序列输入">
-          <article class="panel input-zone">
+          <article class="panel input-zone primary-panel">
             <div class="panel-head">
               <h2>Sequence Input</h2>
               <span id="parseStatus">Ready</span>
@@ -64,7 +64,7 @@
         </section>
 
         <aside class="results-column" aria-label="计算结果">
-          <section class="metrics">
+          <section class="metrics panel">
             <article>
               <span>Protected Avg MW</span>
               <strong id="protectedAvg">--</strong>
@@ -136,8 +136,6 @@
         <button class="button primary" id="calculateButton" type="button">Calculate</button>
         <button class="button" id="clearButton" type="button">Clear</button>
         <button class="button" id="copyReport" type="button">Copy Result</button>
-        <button class="button" id="exportCsv" type="button">Export CSV</button>
-        <button class="button" id="exportPdf" type="button">Export PDF</button>
         <button class="button" id="loadExample" type="button">Load Example</button>
       </footer>
     </main>

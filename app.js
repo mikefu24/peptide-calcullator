@@ -735,10 +735,10 @@ els.loadExample.addEventListener("click", () => {
   render();
   els.input.focus();
 });
-els.exportCsv.addEventListener("click", () => {
+els.exportCsv?.addEventListener("click", () => {
   downloadText("protected-peptide-report.csv", "text/csv;charset=utf-8", buildCsv());
 });
-els.exportPdf.addEventListener("click", exportPdf);
+els.exportPdf?.addEventListener("click", exportPdf);
 els.themeSelect.addEventListener("change", () => applyTheme(els.themeSelect.value));
 
 els.exampleSelect.innerHTML = builtInExamples
