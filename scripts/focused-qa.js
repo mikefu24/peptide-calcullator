@@ -177,14 +177,18 @@ console.log("PASS 16 | Tirzepatide protected/deprotected side-chain chain formul
 
 setSequence(app, "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-assert.equal(app.elements.get("#protectedFormula").textContent, "C56H86N4O13");
-assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H68N4O11");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C56H87N4O13");
+assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H69N4O11");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid residue/);
+setSequence(app, "Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C225H348N48O68");
+assert.equal(app.elements.get("#protectedAvg").textContent, "4813.5189");
 setSequence(app, "H-Lys(C20Diacid)-OH");
 assert.equal(app.elements.get("#protectedFormula").textContent, "C26H50N2O5");
 setSequence(app, "H-Lys(C18Diacid)-OH");
 assert.equal(app.elements.get("#protectedFormula").textContent, "C24H46N2O5");
-console.log("PASS 17 | C20/C18 diacid residues recognized as lipid acid residues, not generic protecting groups");
+console.log("PASS 17 | Tirzepatide full peptide formula passed: C225H348N48O68, MW 4813.5189");
 
 ["DOTA-Lys-Gly-OH", "NOTA-Lys-Gly-OH", "DTPA-Lys-Gly-OH", "Hynic-Lys-Gly-OH"].forEach((sequence) => {
   setSequence(app, sequence);

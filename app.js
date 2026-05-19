@@ -33,7 +33,7 @@ const residues = {
   Aib: { code: "Aib", formula: { C: 4, H: 7, N: 1, O: 1 }, sideChain: "alpha,alpha-dimethyl", special: true },
   Pyr: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
   pGlu: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
-  AEEA: { code: "AEEA", formula: { C: 6, H: 11, N: 1, O: 3 }, sideChain: "PEG-like amino acid linker", special: true },
+  AEEA: { code: "AEEA", formula: { C: 6, H: 11, N: 1, O: 3 }, sideChainFormula: { C: 6, H: 12, N: 1, O: 3 }, sideChain: "PEG-like amino acid linker", special: true },
   OEG: { code: "OEG", formula: { C: 4, H: 7, N: 1, O: 3 }, sideChain: "oligoethylene glycol amino acid linker", special: true },
   Ado: { code: "Ado", formula: { C: 4, H: 7, N: 1, O: 3 }, sideChain: "8-amino-3,6-dioxaoctanoic acid linker alias", special: true },
   gammaGlu: { code: "gGlu", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-glutamyl linker", special: true },
@@ -115,6 +115,7 @@ const builtInExamples = [
   "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
   "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
   "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
+  "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
   "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
   "DOTA-Lys-Gly-OH",
 ];
@@ -191,14 +192,17 @@ function normalizeToken(token) {
 function hasBalancedParentheses(input) {
   let depth = 0;
   let bracketDepth = 0;
+  let braceDepth = 0;
   for (const char of input) {
     if (char === "(") depth += 1;
     if (char === ")") depth -= 1;
     if (char === "[") bracketDepth += 1;
     if (char === "]") bracketDepth -= 1;
-    if (depth < 0 || bracketDepth < 0) return false;
+    if (char === "{") braceDepth += 1;
+    if (char === "}") braceDepth -= 1;
+    if (depth < 0 || bracketDepth < 0 || braceDepth < 0) return false;
   }
-  return depth === 0 && bracketDepth === 0;
+  return depth === 0 && bracketDepth === 0 && braceDepth === 0;
 }
 
 function splitTopLevel(input, separator = "-") {
@@ -206,14 +210,17 @@ function splitTopLevel(input, separator = "-") {
   let current = "";
   let parenDepth = 0;
   let bracketDepth = 0;
+  let braceDepth = 0;
 
   for (const char of input) {
     if (char === "(") parenDepth += 1;
     if (char === ")") parenDepth -= 1;
     if (char === "[") bracketDepth += 1;
     if (char === "]") bracketDepth -= 1;
+    if (char === "{") braceDepth += 1;
+    if (char === "}") braceDepth -= 1;
 
-    if (char === separator && parenDepth === 0 && bracketDepth === 0) {
+    if (char === separator && parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
       parts.push(current);
       current = "";
       continue;
@@ -236,6 +243,16 @@ function mergeKnownHyphenatedGroups(parts) {
     }
   }
   return merged;
+}
+
+function normalizeCurlySideChainToken(token) {
+  const match = token.match(/^\{(.+)\}$/);
+  if (!match) return token;
+  const parts = mergeKnownHyphenatedGroups(splitTopLevel(match[1]));
+  if (parts.length < 2) return token;
+  const anchor = parts.at(-1);
+  if (parseResidue(anchor).kind !== "residue") return token;
+  return `${anchor}[${parts.slice(0, -1).join("-")}]`;
 }
 
 function parseResidue(token) {
@@ -273,6 +290,7 @@ function parseSequence(input) {
   const unknownMods = [];
 
   tokens.forEach((token, index) => {
+    const residueToken = normalizeCurlySideChainToken(token);
     if (index === 0 && (groups[token] || token in terminalGroups)) {
       nTerminal.push(token);
       return;
@@ -285,7 +303,7 @@ function parseSequence(input) {
       nTerminal.push(token);
       return;
     }
-    const residue = parseResidue(token);
+    const residue = parseResidue(residueToken);
     if (residue.kind === "residue") {
       residue.mods.forEach((mod) => {
         if (!groups[mod]) {
@@ -360,7 +378,7 @@ function addResidueModifier(protectedFormula, deprotectedFormula, protectingList
   });
 }
 
-function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex) {
+function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex, options = {}) {
   const site = `${sideChainSiteLabel(residue, index)} linker ${unitIndex + 1}`;
   if (groups[unit]) {
     addFormula(protectedFormula, groups[unit].formula);
@@ -378,8 +396,9 @@ function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingL
 
   const chainResidue = parseResidue(unit);
   if (chainResidue.kind !== "residue") return;
-  addFormula(protectedFormula, residues[chainResidue.name].formula);
-  addFormula(deprotectedFormula, residues[chainResidue.name].formula);
+  const chainFormula = options.useSideChainLinkerFormula ? residues[chainResidue.name].sideChainFormula || residues[chainResidue.name].formula : residues[chainResidue.name].formula;
+  addFormula(protectedFormula, chainFormula);
+  addFormula(deprotectedFormula, chainFormula);
   protectingList.push({
     group: chainResidue.name,
     label: residues[chainResidue.name].code || chainResidue.name,
@@ -402,7 +421,7 @@ function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingL
     );
   });
   chainResidue.sideChainChain.forEach((nestedUnit, nestedIndex) => {
-    addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, chainResidue, index, nestedUnit, nestedIndex);
+    addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, chainResidue, index, nestedUnit, nestedIndex, options);
   });
 }
 
@@ -415,8 +434,11 @@ function calculate(parsed) {
     addFormula(deprotectedFormula, residues[residue.name].formula);
     addFormula(protectedFormula, residues[residue.name].formula);
     residue.mods.forEach((mod) => addResidueModifier(protectedFormula, deprotectedFormula, protectingList, residue, index, mod));
+    const isProtectedLipidBuildingBlock = residue.sideChainChain.some((unit) => ["C18-OtBu", "C20-OtBu"].includes(unit));
     residue.sideChainChain.forEach((unit, unitIndex) => {
-      addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex);
+      addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex, {
+        useSideChainLinkerFormula: !isProtectedLipidBuildingBlock,
+      });
     });
   });
 

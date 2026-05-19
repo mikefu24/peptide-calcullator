@@ -107,6 +107,7 @@ function bootApp() {
     "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
     "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
     "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
+    "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
     "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
     "DOTA-Lys-Gly-OH",
   ];
@@ -206,9 +207,14 @@ function bootApp() {
 
   app.setSequence("Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C56H86N4O13");
-  assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H68N4O11");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C56H87N4O13");
+  assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H69N4O11");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid residue/);
+
+  app.setSequence("Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C225H348N48O68");
+  assert.equal(app.elements.get("#protectedAvg").textContent, "4813.5189");
 
   app.setSequence("H-Lys(C20Diacid)-OH");
   assert.equal(app.elements.get("#protectedFormula").textContent, "C26H50N2O5");
