@@ -132,6 +132,12 @@ function bootApp() {
   assert.notEqual(app.elements.get("#protectedAvg").textContent, "--");
   assert.notEqual(app.elements.get("#deprotectedAvg").textContent, "--");
 
+  app.setSequence("Fmoc-Gly-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C17H15NO4");
+
+  app.setSequence("Cbz-Gly-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C10H11NO4");
+
   app.setSequence("Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);

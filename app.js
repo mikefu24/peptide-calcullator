@@ -47,10 +47,10 @@ const codeToResidue = Object.fromEntries(
 );
 
 const groups = {
-  Fmoc: { label: "Fmoc", formula: { C: 15, H: 11, O: 2 }, labile: "base", class: "N-protecting" },
+  Fmoc: { label: "Fmoc", formula: { C: 15, H: 10, O: 2 }, labile: "base", class: "N-protecting" },
   Boc: { label: "Boc", formula: { C: 5, H: 8, O: 2 }, labile: "acid", class: "amine protecting" },
-  Cbz: { label: "Cbz/Z", formula: { C: 8, H: 7, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
-  Z: { label: "Cbz/Z", formula: { C: 8, H: 7, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
+  Cbz: { label: "Cbz/Z", formula: { C: 8, H: 6, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
+  Z: { label: "Cbz/Z", formula: { C: 8, H: 6, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
   Trt: { label: "Trt", formula: { C: 19, H: 15 }, labile: "acid", class: "side-chain protecting" },
   tBu: { label: "tBu", formula: { C: 4, H: 8 }, labile: "acid", class: "hydroxyl protecting" },
   OtBu: { label: "OtBu", formula: { C: 4, H: 8 }, labile: "acid", class: "carboxyl protecting" },
@@ -60,7 +60,7 @@ const groups = {
   Mtt: { label: "Mtt", formula: { C: 20, H: 17, O: 1 }, labile: "acid", class: "amine protecting" },
   Dde: { label: "Dde", formula: { C: 10, H: 11, O: 2 }, labile: "hydrazine", class: "orthogonal amine protecting" },
   ivDde: { label: "ivDde", formula: { C: 14, H: 17, O: 2 }, labile: "hydrazine", class: "orthogonal amine protecting" },
-  Alloc: { label: "Alloc", formula: { C: 4, H: 5, O: 2 }, labile: "palladium", class: "amine protecting" },
+  Alloc: { label: "Alloc", formula: { C: 4, H: 4, O: 2 }, labile: "palladium", class: "amine protecting" },
   Ac: { label: "Ac", formula: { C: 2, H: 2, O: 1 }, labile: "stable", class: "acyl modification" },
   Acm: { label: "Acm", formula: { C: 3, H: 5, N: 1, O: 1 }, labile: "iodine/mercury", class: "thiol protecting" },
   StBu: { label: "StBu", formula: { C: 4, H: 9, S: 1 }, labile: "reducing", class: "thiol protecting" },
