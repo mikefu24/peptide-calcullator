@@ -119,6 +119,20 @@ assert.equal(app.elements.get("#protectedFormula").textContent, "C30H31N3O4");
 assert.equal(app.elements.get("#protectedAvg").textContent, "497.5938");
 console.log("PASS 8 | Boc-His(Trt)-OH formula and MW regression passed");
 
+setSequence(app, "Fmoc-Arg(Pbf)-Gly-OH");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C36H43N5O8S");
+assert.equal(app.elements.get("#protectedAvg").textContent, "705.8311");
+console.log("PASS 9 | Fmoc-Arg(Pbf)-Gly-OH Pbf hydrogen regression passed");
+
+setSequence(app, "Fmoc-Ser(tBu)-OH");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C22H25NO5");
+setSequence(app, "Fmoc-Asp(OtBu)-OH");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C23H25NO6");
+setSequence(app, "Ac-Gly-OH");
+assert.equal(app.elements.get("#protectedFormula").textContent, "C4H7NO3");
+console.log("PASS 10 | tBu, OtBu, and Ac representative formulas passed");
+
 setSequence(app, "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);
@@ -126,26 +140,26 @@ assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys side chain/);
 assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu side chain/);
 assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr side chain/);
 assert.match(app.elements.get("#parsedSequence").innerHTML, /AEEA/);
-console.log("PASS 9 | Special residue/linker and side-chain protecting groups recognized: Dde, AEEA, Glu(OtBu), Tyr(tBu)");
+console.log("PASS 11 | Special residue/linker and side-chain protecting groups recognized: Dde, AEEA, Glu(OtBu), Tyr(tBu)");
 
 setSequence(app, "Fmoc-Aib-Gly-Pyr-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#parsedSequence").innerHTML, /Aib/);
 assert.match(app.elements.get("#parsedSequence").innerHTML, /Pyr/);
-console.log("PASS 10 | Special amino acids recognized: Aib and Pyr");
+console.log("PASS 12 | Special amino acids recognized: Aib and Pyr");
 
 setSequence(app, "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C18 diacid/);
 assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
-console.log("PASS 11 | Semaglutide-like lipidated peptide motif recognized: Aib and C18 diacid");
+console.log("PASS 13 | Semaglutide-like lipidated peptide motif recognized: Aib and C18 diacid");
 
 setSequence(app, "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
-console.log("PASS 12 | Tirzepatide-like lipidated peptide motif recognized: Aib and C20 diacid");
+console.log("PASS 14 | Tirzepatide-like lipidated peptide motif recognized: Aib and C20 diacid");
 
 setSequence(app, "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
-console.log("PASS 13 | Retatrutide-like lipidated peptide motif recognized: Aib and C20 diacid");
+console.log("PASS 15 | Retatrutide-like lipidated peptide motif recognized: Aib and C20 diacid");

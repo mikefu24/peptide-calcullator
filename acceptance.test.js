@@ -138,6 +138,19 @@ function bootApp() {
   app.setSequence("Cbz-Gly-OH");
   assert.equal(app.elements.get("#protectedFormula").textContent, "C10H11NO4");
 
+  app.setSequence("Fmoc-Arg(Pbf)-Gly-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C36H43N5O8S");
+  assert.equal(app.elements.get("#protectedAvg").textContent, "705.8311");
+
+  app.setSequence("Fmoc-Ser(tBu)-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C22H25NO5");
+
+  app.setSequence("Fmoc-Asp(OtBu)-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C23H25NO6");
+
+  app.setSequence("Ac-Gly-OH");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C4H7NO3");
+
   app.setSequence("Dde-Lys（Fmoc）-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.equal(app.elements.get("#protectedFormula").textContent, "C31H36N2O6");
