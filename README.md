@@ -10,7 +10,7 @@
 
 - 解析 `Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH` 这类保护肽序列
 - 识别 N 端、C 端和侧链保护基，未知保护基会提示错误
-- 内置 7 个示例序列：
+- 内置 10 个示例序列：
   - `Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH`
   - `H-Arg-Gly-Asp-Phe-Lys-NH2`
   - `Ac-Gly-Gly-Phe-OH`
@@ -18,8 +18,12 @@
   - `Fmoc-Lys(Boc)-Gly-Pro-OH`
   - `Fmoc-Aib-Gly-Pyr-OH`
   - `Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH`
-- 识别特殊残基/连接臂：`Aib`、`Pyr`/`pGlu`、`AEEA`
+  - semaglutide-like lipidated GLP-1 motif
+  - tirzepatide-like lipidated GIP/GLP-1 motif
+  - retatrutide-like lipidated GLP-1/GIP/GCGR motif
+- 识别特殊残基/连接臂：`Aib`、`Pyr`/`pGlu`、`AEEA`、`OEG`、`Ado`、`gGlu`/`gammaGlu`、`MeLeu`、`SerNH2`
 - 识别更多侧链/正交保护基：`Dde`、`ivDde`、`Acm`、`StBu`、`Bzl`、`OBzl`、`OAll`、`Mtr` 等
+- 识别长效肽脂肪化构件：`C18Diacid`、`C20Diacid`、`Octadecanedioyl`、`Eicosanedioyl`
 - 保护基列表区分主链 N 端、侧链和末端，例如 `main-chain N-terminus`、`Lys side chain`、`Glu side chain`、`Tyr side chain`
 - 输出保护肽平均分子量、单同位素质量
 - 输出脱保护后多肽平均分子量、单同位素质量
@@ -48,6 +52,7 @@
 - C 端 `NH2`、`OMe`、`OEt` 会修正末端分子式
 - `AEEA` 作为可进入肽链的氨基酸型 linker 处理
 - `Pyr`/`pGlu` 按焦谷氨酰残基处理
+- semaglutide/tirzepatide/retatrutide-like 示例用于识别长效肽常见构件和风险提示，不作为药品质量放行序列依据
 
 这是研发估算工具原型。特殊氨基酸、linker 和保护基库会持续扩展；用于放行、注册或精确工艺文件前，应结合企业内部保护基数据库、供应商 COA 和标准品结果校准。
 

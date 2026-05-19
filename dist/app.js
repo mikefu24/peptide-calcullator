@@ -34,6 +34,12 @@ const residues = {
   Pyr: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
   pGlu: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
   AEEA: { code: "AEEA", formula: { C: 6, H: 11, N: 1, O: 3 }, sideChain: "PEG-like amino acid linker", special: true },
+  OEG: { code: "OEG", formula: { C: 4, H: 7, N: 1, O: 3 }, sideChain: "oligoethylene glycol amino acid linker", special: true },
+  Ado: { code: "Ado", formula: { C: 4, H: 7, N: 1, O: 3 }, sideChain: "8-amino-3,6-dioxaoctanoic acid linker alias", special: true },
+  gammaGlu: { code: "gGlu", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-glutamyl linker", special: true },
+  gGlu: { code: "gGlu", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-glutamyl linker", special: true },
+  MeLeu: { code: "MeLeu", formula: { C: 7, H: 13, N: 1, O: 1 }, sideChain: "2-methylleucine", special: true },
+  SerNH2: { code: "SerNH2", formula: { C: 3, H: 6, N: 2, O: 1 }, sideChain: "C-terminal serinamide motif", special: true },
 };
 
 const codeToResidue = Object.fromEntries(
@@ -65,6 +71,10 @@ const groups = {
   BrZ: { label: "BrZ", formula: { C: 8, H: 6, O: 2 }, labile: "acid/HF", class: "phenol protecting" },
   Dnp: { label: "Dnp", formula: { C: 6, H: 3, N: 2, O: 4 }, labile: "thiolysis", class: "imidazole protecting" },
   Formyl: { label: "Formyl", formula: { C: 1, O: 1 }, labile: "base", class: "indole protecting" },
+  C18Diacid: { label: "C18 diacid", formula: { C: 18, H: 31, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
+  C20Diacid: { label: "C20 diacid", formula: { C: 20, H: 35, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
+  Octadecanedioyl: { label: "C18 diacid", formula: { C: 18, H: 31, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
+  Eicosanedioyl: { label: "C20 diacid", formula: { C: 20, H: 35, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
 };
 
 const terminalGroups = {
@@ -92,6 +102,9 @@ const builtInExamples = [
   "Fmoc-Lys(Boc)-Gly-Pro-OH",
   "Fmoc-Aib-Gly-Pyr-OH",
   "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
+  "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH",
+  "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
+  "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
 ];
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
@@ -174,7 +187,7 @@ function hasBalancedParentheses(input) {
 }
 
 function parseResidue(token) {
-  const match = token.match(/^([A-Za-z]{1,4})(?:\(([^()]*)\))?$/);
+  const match = token.match(/^([A-Za-z][A-Za-z0-9]{0,9})(?:\(([^()]*)\))?$/);
   if (!match) return { kind: "invalid", raw: token };
   let name = match[1];
   if (name.length === 1) name = codeToResidue[name.toUpperCase()];
@@ -330,6 +343,11 @@ function assessRisks(parsed, calc) {
     .filter((item) => item.siteType === "side-chain" && !item.commonForResidue)
     .forEach((item) => {
       risks.push({ level: "medium", text: `Check protecting group placement: ${item.group} on ${item.residue} side chain is not in the common library.` });
+    });
+  calc.protectingList
+    .filter((item) => item.class === "albumin-binding lipid")
+    .forEach((item) => {
+      risks.push({ level: "medium", text: `Lipidated long-acting peptide motif detected: ${item.group} at ${item.site}. Confirm linker chain, salt form, and exact supplier building block.` });
     });
   parsed.aa
     .filter((residue) => residues[residue.name].special)

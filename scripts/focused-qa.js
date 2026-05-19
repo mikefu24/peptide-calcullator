@@ -121,3 +121,19 @@ assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#parsedSequence").innerHTML, /Aib/);
 assert.match(app.elements.get("#parsedSequence").innerHTML, /Pyr/);
 console.log("PASS 8 | Special amino acids recognized: Aib and Pyr");
+
+setSequence(app, "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.match(app.elements.get("#protectingGroups").innerHTML, /C18 diacid/);
+assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+console.log("PASS 9 | Semaglutide-like lipidated peptide motif recognized: Aib and C18 diacid");
+
+setSequence(app, "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
+console.log("PASS 10 | Tirzepatide-like lipidated peptide motif recognized: Aib and C20 diacid");
+
+setSequence(app, "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2");
+assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
+console.log("PASS 11 | Retatrutide-like lipidated peptide motif recognized: Aib and C20 diacid");

@@ -99,6 +99,9 @@ function bootApp() {
     "Fmoc-Lys(Boc)-Gly-Pro-OH",
     "Fmoc-Aib-Gly-Pyr-OH",
     "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
+    "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH",
+    "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
+    "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
   ];
   examples.forEach((example) => assert.match(fs.readFileSync("app.js", "utf8"), new RegExp(example.replace(/[()]/g, "\\$&"))));
   assert.match(css, /prefers-color-scheme:\s*dark/);
@@ -140,6 +143,19 @@ function bootApp() {
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.match(app.elements.get("#parsedSequence").innerHTML, /Aib/);
   assert.match(app.elements.get("#parsedSequence").innerHTML, /Pyr/);
+
+  app.setSequence("H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /C18 diacid/);
+  assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+
+  app.setSequence("H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
+
+  app.setSequence("H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
 
   app.setSequence("Fmoc-Arg(ABC)-Gly-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
