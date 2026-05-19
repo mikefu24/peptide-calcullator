@@ -75,6 +75,13 @@ const groups = {
   C20Diacid: { label: "C20 diacid", formula: { C: 20, H: 35, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
   Octadecanedioyl: { label: "C18 diacid", formula: { C: 18, H: 31, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
   Eicosanedioyl: { label: "C20 diacid", formula: { C: 20, H: 35, O: 3 }, labile: "stable", class: "albumin-binding lipid" },
+  "C20-OtBu": { label: "C20-OtBu", formula: { C: 24, H: 44, O: 3 }, deprotectedFormula: { C: 20, H: 35, O: 3 }, labile: "acid", class: "albumin-binding lipid ester" },
+  "C18-OtBu": { label: "C18-OtBu", formula: { C: 22, H: 40, O: 3 }, deprotectedFormula: { C: 18, H: 31, O: 3 }, labile: "acid", class: "albumin-binding lipid ester" },
+  DOTA: { label: "DOTA", formula: { C: 16, H: 25, N: 4, O: 7 }, labile: "stable", class: "chelator" },
+  NOTA: { label: "NOTA", formula: { C: 12, H: 20, N: 4, O: 5 }, labile: "stable", class: "chelator" },
+  DTPA: { label: "DTPA", formula: { C: 14, H: 20, N: 3, O: 9 }, labile: "stable", class: "chelator" },
+  Hynic: { label: "Hynic", formula: { C: 6, H: 6, N: 3, O: 1 }, labile: "stable", class: "chelator" },
+  HYNIC: { label: "Hynic", formula: { C: 6, H: 6, N: 3, O: 1 }, labile: "stable", class: "chelator" },
 };
 
 const terminalGroups = {
@@ -105,6 +112,8 @@ const builtInExamples = [
   "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH",
   "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
   "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
+  "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
+  "DOTA-Lys-Gly-OH",
 ];
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
@@ -178,23 +187,64 @@ function normalizeToken(token) {
 
 function hasBalancedParentheses(input) {
   let depth = 0;
+  let bracketDepth = 0;
   for (const char of input) {
     if (char === "(") depth += 1;
     if (char === ")") depth -= 1;
-    if (depth < 0) return false;
+    if (char === "[") bracketDepth += 1;
+    if (char === "]") bracketDepth -= 1;
+    if (depth < 0 || bracketDepth < 0) return false;
   }
-  return depth === 0;
+  return depth === 0 && bracketDepth === 0;
+}
+
+function splitTopLevel(input, separator = "-") {
+  const parts = [];
+  let current = "";
+  let parenDepth = 0;
+  let bracketDepth = 0;
+
+  for (const char of input) {
+    if (char === "(") parenDepth += 1;
+    if (char === ")") parenDepth -= 1;
+    if (char === "[") bracketDepth += 1;
+    if (char === "]") bracketDepth -= 1;
+
+    if (char === separator && parenDepth === 0 && bracketDepth === 0) {
+      parts.push(current);
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  parts.push(current);
+  return parts.map(normalizeToken).filter(Boolean);
+}
+
+function mergeKnownHyphenatedGroups(parts) {
+  const merged = [];
+  for (let index = 0; index < parts.length; index += 1) {
+    const twoPartGroup = `${parts[index]}-${parts[index + 1]}`;
+    if (groups[twoPartGroup]) {
+      merged.push(twoPartGroup);
+      index += 1;
+    } else {
+      merged.push(parts[index]);
+    }
+  }
+  return merged;
 }
 
 function parseResidue(token) {
-  const match = token.match(/^([A-Za-z][A-Za-z0-9]{0,9})(?:\(([^()]*)\))?$/);
+  const match = token.match(/^([A-Za-z][A-Za-z0-9]{0,9})(?:\(([^()]*)\))?(?:\[([^\]]*)\])?$/);
   if (!match) return { kind: "invalid", raw: token };
   let name = match[1];
   if (name.length === 1) name = codeToResidue[name.toUpperCase()];
   const properName = Object.keys(residues).find((key) => key.toLowerCase() === String(name).toLowerCase());
   if (!properName) return { kind: "unknownAminoAcid", name: match[1], raw: token };
   const mods = match[2] ? match[2].split(/[,+/]/).map(normalizeToken).filter(Boolean) : [];
-  return { kind: "residue", name: properName, code: residues[properName].code, mods, raw: token };
+  const sideChainChain = match[3] ? mergeKnownHyphenatedGroups(splitTopLevel(match[3])) : [];
+  return { kind: "residue", name: properName, code: residues[properName].code, mods, sideChainChain, raw: token };
 }
 
 function parseSequence(input) {
@@ -211,10 +261,7 @@ function parseSequence(input) {
     errors.push("Invalid sequence separator");
   }
 
-  const tokens = normalizedInput
-    .split("-")
-    .map(normalizeToken)
-    .filter(Boolean);
+  const tokens = splitTopLevel(normalizedInput);
 
   const nTerminal = [];
   const cTerminal = [];
@@ -241,6 +288,13 @@ function parseSequence(input) {
         if (!groups[mod]) {
           unknownMods.push(`${residue.name}(${mod})`);
           errors.push(`Unknown protecting group: ${mod}`);
+        }
+      });
+      residue.sideChainChain.forEach((part) => {
+        const chainPart = parseResidue(part);
+        if (!groups[part] && chainPart.kind !== "residue") {
+          unknownMods.push(`${residue.name}[${part}]`);
+          errors.push(`Unknown protecting group: ${part}`);
         }
       });
       aa.push(residue);
@@ -280,6 +334,75 @@ function displayProtectingGroup(item) {
   return item.siteType === "backbone N" && item.group === "Fmoc" ? "N-Fmoc" : item.label;
 }
 
+function addDeprotectedGroupFormula(deprotectedFormula, group) {
+  if (!groups[group]) return;
+  if (groups[group].deprotectedFormula) {
+    addFormula(deprotectedFormula, groups[group].deprotectedFormula);
+  } else if (groups[group].labile === "stable") {
+    addFormula(deprotectedFormula, groups[group].formula);
+  }
+}
+
+function addResidueModifier(protectedFormula, deprotectedFormula, protectingList, residue, index, mod, sitePrefix = sideChainSiteLabel(residue, index)) {
+  if (!groups[mod]) return;
+  addFormula(protectedFormula, groups[mod].formula);
+  addDeprotectedGroupFormula(deprotectedFormula, mod);
+  protectingList.push({
+    group: mod,
+    site: sitePrefix,
+    siteType: sitePrefix.includes("linker") ? "side-chain linker" : "side-chain",
+    residue: residue.name,
+    commonForResidue: isCommonResidueProtection(residue.name, mod),
+    ...groups[mod],
+  });
+}
+
+function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex) {
+  const site = `${sideChainSiteLabel(residue, index)} linker ${unitIndex + 1}`;
+  if (groups[unit]) {
+    addFormula(protectedFormula, groups[unit].formula);
+    addDeprotectedGroupFormula(deprotectedFormula, unit);
+    protectingList.push({
+      group: unit,
+      site,
+      siteType: "side-chain linker",
+      residue: residue.name,
+      commonForResidue: true,
+      ...groups[unit],
+    });
+    return;
+  }
+
+  const chainResidue = parseResidue(unit);
+  if (chainResidue.kind !== "residue") return;
+  addFormula(protectedFormula, residues[chainResidue.name].formula);
+  addFormula(deprotectedFormula, residues[chainResidue.name].formula);
+  protectingList.push({
+    group: chainResidue.name,
+    label: residues[chainResidue.name].code || chainResidue.name,
+    site,
+    siteType: "side-chain linker",
+    residue: residue.name,
+    commonForResidue: true,
+    labile: "stable",
+    class: residues[chainResidue.name].special ? "special amino acid linker" : "amino acid linker",
+  });
+  chainResidue.mods.forEach((mod) => {
+    addResidueModifier(
+      protectedFormula,
+      deprotectedFormula,
+      protectingList,
+      { ...chainResidue, name: chainResidue.name },
+      index,
+      mod,
+      `${site} ${chainResidue.name} side chain`,
+    );
+  });
+  chainResidue.sideChainChain.forEach((nestedUnit, nestedIndex) => {
+    addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, chainResidue, index, nestedUnit, nestedIndex);
+  });
+}
+
 function calculate(parsed) {
   const deprotectedFormula = cloneFormula(water);
   const protectedFormula = cloneFormula(water);
@@ -288,25 +411,16 @@ function calculate(parsed) {
   parsed.aa.forEach((residue, index) => {
     addFormula(deprotectedFormula, residues[residue.name].formula);
     addFormula(protectedFormula, residues[residue.name].formula);
-    residue.mods.forEach((mod) => {
-      if (groups[mod]) {
-        addFormula(protectedFormula, groups[mod].formula);
-        protectingList.push({
-          group: mod,
-          site: sideChainSiteLabel(residue, index),
-          siteType: "side-chain",
-          residue: residue.name,
-          commonForResidue: isCommonResidueProtection(residue.name, mod),
-          ...groups[mod],
-        });
-      }
+    residue.mods.forEach((mod) => addResidueModifier(protectedFormula, deprotectedFormula, protectingList, residue, index, mod));
+    residue.sideChainChain.forEach((unit, unitIndex) => {
+      addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex);
     });
   });
 
   parsed.nTerminal.forEach((group) => {
     if (groups[group]) {
       addFormula(protectedFormula, groups[group].formula);
-      if (groups[group].labile === "stable") addFormula(deprotectedFormula, groups[group].formula);
+      addDeprotectedGroupFormula(deprotectedFormula, group);
       protectingList.push({ group, site: "main-chain N-terminus", siteType: "backbone N", commonForResidue: true, ...groups[group] });
     }
   });
@@ -345,7 +459,7 @@ function assessRisks(parsed, calc) {
       risks.push({ level: "medium", text: `Check protecting group placement: ${item.group} on ${item.residue} side chain is not in the common library.` });
     });
   calc.protectingList
-    .filter((item) => item.class === "albumin-binding lipid")
+    .filter((item) => item.class?.startsWith("albumin-binding lipid"))
     .forEach((item) => {
       risks.push({ level: "medium", text: `Lipidated long-acting peptide motif detected: ${item.group} at ${item.site}. Confirm linker chain, salt form, and exact supplier building block.` });
     });
@@ -510,7 +624,14 @@ function render() {
           <span class="sequence-index">${index + 1}</span>
           <span class="sequence-name">${aa.name} (${aa.code})</span>
           <span class="sequence-mods ${aa.mods.some((mod) => !groups[mod]) ? "error" : ""}">
-            ${aa.mods.length ? `side chain: ${aa.mods.join(", ")}` : "无侧链保护"}
+            ${
+              [
+                aa.mods.length ? `side chain: ${aa.mods.join(", ")}` : "",
+                aa.sideChainChain.length ? `side-chain chain: ${aa.sideChainChain.join("-")}` : "",
+              ]
+                .filter(Boolean)
+                .join("; ") || "无侧链保护"
+            }
           </span>
         </li>
       `,

@@ -2,6 +2,10 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 class Element {
   constructor(selector) {
     this.selector = selector;
@@ -102,8 +106,10 @@ function bootApp() {
     "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH",
     "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
     "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
+    "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
+    "DOTA-Lys-Gly-OH",
   ];
-  examples.forEach((example) => assert.match(fs.readFileSync("app.js", "utf8"), new RegExp(example.replace(/[()]/g, "\\$&"))));
+  examples.forEach((example) => assert.match(fs.readFileSync("app.js", "utf8"), new RegExp(escapeRegExp(example))));
   assert.match(css, /prefers-color-scheme:\s*dark/);
   assert.match(css, /\[data-theme="dark"\]/);
   assert.match(css, /\[data-theme="light"\]/);
@@ -185,6 +191,21 @@ function bootApp() {
   app.setSequence("H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
+
+  app.setSequence("Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.equal(app.elements.get("#protectedFormula").textContent, "C66H105N5O16");
+  assert.equal(app.elements.get("#protectedAvg").textContent, "1224.5836");
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20-OtBu/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /AEEA/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /side-chain chain: C20-OtBu-Glu\(OtBu\)-AEEA-AEEA/);
+  assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+
+  ["DOTA-Lys-Gly-OH", "NOTA-Lys-Gly-OH", "DTPA-Lys-Gly-OH", "Hynic-Lys-Gly-OH"].forEach((sequence) => {
+    app.setSequence(sequence);
+    assert.equal(app.elements.get("#parseStatus").textContent, "已解析", sequence);
+    assert.notEqual(app.elements.get("#protectedAvg").textContent, "--", sequence);
+  });
 
   app.setSequence("Fmoc-Arg(ABC)-Gly-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
