@@ -2,6 +2,10 @@
 
 面向多肽合成研发人员的保护肽分子量计算原型。打开 `index.html` 即可使用。
 
+在线访问：
+
+- Netlify: https://protected-peptide-calculator.netlify.app
+
 当前功能：
 
 - 解析 `Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH` 这类保护肽序列
