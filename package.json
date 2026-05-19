@@ -1,0 +1,21 @@
+{
+  "name": "protected-peptide-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first protected peptide molecular weight calculator.",
+  "type": "commonjs",
+  "scripts": {
+    "lint": "node scripts/lint.js",
+    "test": "node acceptance.test.js",
+    "functional": "node scripts/functional-check.js",
+    "focused-qa": "node scripts/focused-qa.js",
+    "build": "node scripts/build.js"
+  },
+  "keywords": [
+    "peptide",
+    "calculator",
+    "molecular-weight",
+    "protected-peptide"
+  ],
+  "license": "UNLICENSED"
+}

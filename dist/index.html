@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Protected Peptide Calculator</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="kicker">Professional Laboratory Tool</p>
+          <h1>Protected Peptide Calculator</h1>
+        </div>
+        <label class="theme-control">
+          Theme
+          <select id="themeSelect">
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+      </header>
+
+      <section class="calculator-layout">
+        <section class="input-column" aria-label="序列输入">
+          <article class="panel input-zone">
+            <div class="panel-head">
+              <h2>Sequence Input</h2>
+              <span id="parseStatus">Ready</span>
+            </div>
+            <label for="sequenceInput">Protected peptide sequence</label>
+            <textarea id="sequenceInput" spellcheck="false">Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH</textarea>
+            <label class="example-control">
+              Built-in example
+              <select id="exampleSelect"></select>
+            </label>
+            <div class="salt-controls">
+              <label>
+                Salt form
+                <select id="saltType">
+                  <option value="free">Free base / acid</option>
+                  <option value="tfa">TFA</option>
+                  <option value="hcl">HCl</option>
+                  <option value="acoh">AcOH</option>
+                </select>
+              </label>
+              <label>
+                Equiv.
+                <input id="saltEquiv" type="number" min="0" max="20" step="0.5" value="1" />
+              </label>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Sequence Parse</h2>
+              <span id="residueCount">0 aa</span>
+            </div>
+            <div id="terminalSummary" class="terminal-summary"></div>
+            <ol id="parsedSequence" class="sequence-list"></ol>
+          </article>
+        </section>
+
+        <aside class="results-column" aria-label="计算结果">
+          <section class="metrics">
+            <article>
+              <span>Protected Avg MW</span>
+              <strong id="protectedAvg">--</strong>
+            </article>
+            <article>
+              <span>Protected Mono Mass</span>
+              <strong id="protectedMono">--</strong>
+            </article>
+            <article>
+              <span>Deprotected Avg MW</span>
+              <strong id="deprotectedAvg">--</strong>
+            </article>
+            <article>
+              <span>Deprotected Mono Mass</span>
+              <strong id="deprotectedMono">--</strong>
+            </article>
+          </section>
+
+          <section class="result-grid">
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Formula</h2>
+                <span id="saltFormula">Free</span>
+              </div>
+              <dl class="formula-list">
+                <div>
+                  <dt>Protected</dt>
+                  <dd id="protectedFormula">--</dd>
+                </div>
+                <div>
+                  <dt>Deprotected</dt>
+                  <dd id="deprotectedFormula">--</dd>
+                </div>
+                <div>
+                  <dt>Salt avg / mono</dt>
+                  <dd><span id="saltAvg">--</span> / <span id="saltMono">--</span></dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Protecting Groups</h2>
+                <span id="protectingGroupCount">0</span>
+              </div>
+              <div id="protectingGroups" class="tag-cloud"></div>
+            </article>
+
+            <article class="panel risk-panel">
+              <div class="panel-head">
+                <h2>Synthesis Risk</h2>
+                <span id="riskLevel">--</span>
+              </div>
+              <ul id="riskList" class="risk-list"></ul>
+            </article>
+
+            <article class="panel report-panel">
+              <div class="panel-head">
+                <h2>Report Preview</h2>
+                <span id="copyState">Not copied</span>
+              </div>
+              <pre id="reportText"></pre>
+            </article>
+          </section>
+        </aside>
+      </section>
+
+      <footer class="action-bar" aria-label="操作按钮">
+        <button class="button primary" id="calculateButton" type="button">Calculate</button>
+        <button class="button" id="clearButton" type="button">Clear</button>
+        <button class="button" id="copyReport" type="button">Copy Result</button>
+        <button class="button" id="exportCsv" type="button">Export CSV</button>
+        <button class="button" id="exportPdf" type="button">Export PDF</button>
+        <button class="button" id="loadExample" type="button">Load Example</button>
+      </footer>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
