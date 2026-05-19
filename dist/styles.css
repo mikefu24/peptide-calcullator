@@ -223,6 +223,10 @@ dt {
   margin-top: 12px;
 }
 
+.compact-control {
+  margin-top: 10px;
+}
+
 textarea,
 select,
 input {

@@ -22,6 +22,7 @@ const js = fs.readFileSync("app.js", "utf8");
   'id="calculateButton"',
   'id="copyReport"',
   'id="exampleSelect"',
+  'id="reportProfile"',
 ].forEach((needle) => {
   if (!html.includes(needle)) {
     throw new Error(`HTML lint failed: missing ${needle}`);
@@ -45,6 +46,9 @@ const js = fs.readFileSync("app.js", "utf8");
   "Missing C-terminal group",
   "Parentheses not closed",
   "Invalid sequence separator",
+  "chemistryLibrary",
+  "peptideTemplates",
+  "reportProfiles",
 ].forEach((needle) => {
   if (!js.includes(needle)) {
     throw new Error(`JS lint failed: missing friendly error text ${needle}`);

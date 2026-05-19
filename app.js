@@ -103,22 +103,51 @@ const salts = {
 
 const water = { H: 2, O: 1 };
 const defaultExample = "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH";
-const builtInExamples = [
-  "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",
-  "H-Arg-Gly-Asp-Phe-Lys-NH2",
-  "Ac-Gly-Gly-Phe-OH",
-  "Boc-Ala-Val-Leu-Phe-OMe",
-  "Fmoc-Lys(Boc)-Gly-Pro-OH",
-  "Fmoc-Aib-Gly-Pyr-OH",
-  "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
-  "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH",
-  "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
-  "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
-  "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
-  "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
-  "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
-  "DOTA-Lys-Gly-OH",
+const peptideTemplates = [
+  { family: "Protected peptide", name: "Fmoc protected RGD-K", reportUse: "R&D", sequence: "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH" },
+  { family: "Unprotected peptide", name: "RGD-FK amide", reportUse: "R&D", sequence: "H-Arg-Gly-Asp-Phe-Lys-NH2" },
+  { family: "N-modified peptide", name: "Ac-GGF", reportUse: "Quote", sequence: "Ac-Gly-Gly-Phe-OH" },
+  { family: "Protected peptide", name: "Boc AVL-F methyl ester", reportUse: "R&D", sequence: "Boc-Ala-Val-Leu-Phe-OMe" },
+  { family: "Difficult sequence", name: "Fmoc Lys-Boc GP", reportUse: "Process", sequence: "Fmoc-Lys(Boc)-Gly-Pro-OH" },
+  { family: "Special residue", name: "Aib/Pyr model", reportUse: "R&D", sequence: "Fmoc-Aib-Gly-Pyr-OH" },
+  { family: "Linker chemistry", name: "Dde/AEEA/Glu/Tyr model", reportUse: "Process", sequence: "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH" },
+  { family: "GLP-1 analog", name: "Semaglutide-like C18 motif", reportUse: "R&D", sequence: "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH" },
+  { family: "GIP/GLP-1 analog", name: "Tirzepatide-like C20 motif", reportUse: "R&D", sequence: "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2" },
+  { family: "GLP-1/GCG analog", name: "Retatrutide-like C20 motif", reportUse: "R&D", sequence: "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2" },
+  { family: "Fatty acid linker", name: "Protected C20-OtBu side chain", reportUse: "Process", sequence: "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH" },
+  { family: "GIP/GLP-1 analog", name: "Tirzepatide full formula validation", reportUse: "R&D", sequence: "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2" },
+  { family: "Fatty acid linker", name: "C20-Glu-AEEA protected model", reportUse: "Process", sequence: "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH" },
+  { family: "Chelator peptide", name: "DOTA-Lys-Gly", reportUse: "Quote", sequence: "DOTA-Lys-Gly-OH" },
 ];
+const builtInExamples = peptideTemplates.map((template) => template.sequence);
+const groupSiteTypes = {
+  backboneN: new Set(["Fmoc", "Boc", "Cbz", "Z", "Alloc", "Dde", "ivDde", "Ac"]),
+  sideChainProtecting: new Set(["Boc", "Trt", "tBu", "OtBu", "Pbf", "Pmc", "Mtr", "Mtt", "Dde", "ivDde", "Alloc", "Acm", "StBu", "Bzl", "OBzl", "OMe", "OAll", "BrZ", "Dnp", "Formyl", "C18", "C20", "C18Diacid", "C20Diacid", "Octadecanedioyl", "Eicosanedioyl"]),
+  linker: new Set(["AEEA", "OEG", "Ado", "gammaGlu", "gGlu"]),
+  fattyAcid: new Set(["C18", "C20", "C18Diacid", "C20Diacid", "Octadecanedioyl", "Eicosanedioyl", "C18-OtBu", "C20-OtBu"]),
+  chelator: new Set(["DOTA", "NOTA", "DTPA", "Hynic", "HYNIC"]),
+  salt: new Set(Object.keys(salts)),
+};
+const chemistryLibrary = {
+  version: "1.5.0",
+  atomMass,
+  residues,
+  groups,
+  terminalGroups,
+  salts,
+  templates: peptideTemplates,
+  categories: {
+    residues: ["canonical amino acid", "special amino acid", "linker residue"],
+    modifications: ["N-terminal", "C-terminal", "side-chain protecting", "linker", "fatty acid", "chelator", "salt"],
+    peptideFamilies: ["GLP-1 analog", "GIP/GLP-1 analog", "GLP-1/GCG analog", "GnRH analog", "somatostatin analog"],
+  },
+  siteTypes: groupSiteTypes,
+};
+const reportProfiles = {
+  rd: "R&D calculation report",
+  quote: "Quotation estimate report",
+  process: "Process input report",
+};
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
 
@@ -152,6 +181,7 @@ const els = {
   exportPdf: document.querySelector("#exportPdf"),
   loadExample: document.querySelector("#loadExample"),
   exampleSelect: document.querySelector("#exampleSelect"),
+  reportProfile: document.querySelector("#reportProfile"),
   themeSelect: document.querySelector("#themeSelect"),
 };
 
@@ -355,6 +385,15 @@ function displayProtectingGroup(item) {
   return item.siteType === "backbone N" && item.group === "Fmoc" ? "N-Fmoc" : item.label;
 }
 
+function groupSiteCategory(group, siteType) {
+  if (siteType === "backbone N") return "N-terminal";
+  if (groupSiteTypes.fattyAcid.has(group)) return "fatty acid";
+  if (groupSiteTypes.chelator.has(group)) return "chelator";
+  if (groupSiteTypes.linker.has(group)) return "linker";
+  if (siteType === "side-chain linker") return "linker";
+  return "side-chain protecting";
+}
+
 function addDeprotectedGroupFormula(deprotectedFormula, group) {
   if (!groups[group]) return;
   if (groups[group].deprotectedFormula) {
@@ -372,6 +411,7 @@ function addResidueModifier(protectedFormula, deprotectedFormula, protectingList
     group: mod,
     site: sitePrefix,
     siteType: sitePrefix.includes("linker") ? "side-chain linker" : "side-chain",
+    siteCategory: groupSiteCategory(mod, sitePrefix.includes("linker") ? "side-chain linker" : "side-chain"),
     residue: residue.name,
     commonForResidue: isCommonResidueProtection(residue.name, mod),
     ...groups[mod],
@@ -387,6 +427,7 @@ function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingL
       group: unit,
       site,
       siteType: "side-chain linker",
+      siteCategory: groupSiteCategory(unit, "side-chain linker"),
       residue: residue.name,
       commonForResidue: true,
       ...groups[unit],
@@ -404,6 +445,7 @@ function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingL
     label: residues[chainResidue.name].code || chainResidue.name,
     site,
     siteType: "side-chain linker",
+    siteCategory: groupSiteCategory(chainResidue.name, "side-chain linker"),
     residue: residue.name,
     commonForResidue: true,
     labile: "stable",
@@ -446,7 +488,7 @@ function calculate(parsed) {
     if (groups[group]) {
       addFormula(protectedFormula, groups[group].formula);
       addDeprotectedGroupFormula(deprotectedFormula, group);
-      protectingList.push({ group, site: "main-chain N-terminus", siteType: "backbone N", commonForResidue: true, ...groups[group] });
+      protectingList.push({ group, site: "main-chain N-terminus", siteType: "backbone N", siteCategory: groupSiteCategory(group, "backbone N"), commonForResidue: true, ...groups[group] });
     }
   });
 
@@ -555,11 +597,30 @@ function downloadText(filename, mimeType, text) {
   URL.revokeObjectURL(url);
 }
 
+function selectedTemplate(sequence = els.input.value.trim()) {
+  return peptideTemplates.find((template) => template.sequence === sequence) || null;
+}
+
+function selectedReportProfile() {
+  return reportProfiles[els.reportProfile?.value] || reportProfiles.rd;
+}
+
+function protectingCategorySummary(protectingList) {
+  return protectingList.reduce((summary, item) => {
+    const category = item.siteCategory || "other";
+    summary[category] = (summary[category] || 0) + 1;
+    return summary;
+  }, {});
+}
+
 function buildCsv() {
   if (!currentResult) render();
   const result = currentResult;
   const rows = [
     ["Field", "Value"],
+    ["Report profile", result.reportProfile],
+    ["Template", result.template ? `${result.template.family} | ${result.template.name}` : "Custom sequence"],
+    ["Chemistry library version", chemistryLibrary.version],
     ["Sequence", result.sequence],
     ["Protected average MW", fixed(result.calc.protectedMass.avg)],
     ["Protected monoisotopic mass", fixed(result.calc.protectedMass.mono)],
@@ -573,6 +634,7 @@ function buildCsv() {
     ["Salt form formula", result.saltFormulaText],
     ["N-terminus", result.nTermText],
     ["C-terminus", result.cTermText],
+    ["Modification categories", Object.entries(protectingCategorySummary(result.calc.protectingList)).map(([category, count]) => `${category}: ${count}`).join("; ") || "None"],
     ["Protecting groups", result.calc.protectingList.map((item) => `${item.label} @ ${item.site}`).join("; ")],
     ["Risks", result.risks.map((risk) => `[${risk.level}] ${risk.text}`).join("; ")],
   ];
@@ -678,12 +740,19 @@ function render() {
   els.riskLevel.textContent = topRisk;
 
   const protectionRows = calc.protectingList.length
-    ? calc.protectingList.map((item) => `- ${displayProtectingGroup(item)} @ ${item.site} (${item.class}; ${item.labile})`).join("\n")
+    ? calc.protectingList.map((item) => `- ${displayProtectingGroup(item)} @ ${item.site} (${item.siteCategory}; ${item.class}; ${item.labile})`).join("\n")
     : "- 无";
 
   const riskRows = risks.map((risk) => `- [${risk.level}] ${risk.text}`).join("\n");
+  const template = selectedTemplate();
+  const reportProfile = selectedReportProfile();
+  const categoryRows = Object.entries(protectingCategorySummary(calc.protectingList))
+    .map(([category, count]) => `- ${category}: ${count}`)
+    .join("\n") || "- None";
   currentResult = {
     sequence: els.input.value.trim(),
+    template,
+    reportProfile,
     parsed,
     calc,
     saltMass,
@@ -697,7 +766,9 @@ function render() {
   };
 
   els.reportText.textContent = [
-    "Protected Peptide Calculator Report",
+    reportProfile,
+    `Chemistry library version: ${chemistryLibrary.version}`,
+    `Template: ${template ? `${template.family} | ${template.name}` : "Custom sequence"}`,
     `Sequence: ${els.input.value.trim()}`,
     `Protected average MW: ${fixed(calc.protectedMass.avg)}`,
     `Protected monoisotopic mass: ${fixed(calc.protectedMass.mono)}`,
@@ -710,6 +781,9 @@ function render() {
     `Salt form formula: ${saltFormulaText}`,
     `N-terminus: ${nTermText}`,
     `C-terminus: ${cTermText}`,
+    "",
+    "Modification categories:",
+    categoryRows,
     "",
     "Protecting groups:",
     protectionRows,
@@ -724,6 +798,7 @@ function render() {
 els.input.addEventListener("input", render);
 els.saltType.addEventListener("change", render);
 els.saltEquiv.addEventListener("input", render);
+els.reportProfile?.addEventListener("change", render);
 els.calculateButton.addEventListener("click", render);
 els.clearButton.addEventListener("click", () => {
   els.input.value = "";
@@ -742,7 +817,11 @@ els.exportPdf?.addEventListener("click", exportPdf);
 els.themeSelect.addEventListener("change", () => applyTheme(els.themeSelect.value));
 
 els.exampleSelect.innerHTML = builtInExamples
-  .map((example) => `<option value="${example}">${example}</option>`)
+  .map((example) => {
+    const template = selectedTemplate(example);
+    const label = template ? `${template.family} | ${template.name}` : example;
+    return `<option value="${example}">${label}</option>`;
+  })
   .join("");
 els.exampleSelect.value = defaultExample;
 

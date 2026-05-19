@@ -97,6 +97,13 @@ function bootApp() {
   assert.doesNotMatch(html, />Export CSV</);
   assert.doesNotMatch(html, />Export PDF</);
   assert.match(html, /id="themeSelect"/);
+  assert.match(html, /id="reportProfile"/);
+  assert.match(fs.readFileSync("app.js", "utf8"), /version:\s*"1\.5\.0"/);
+  assert.match(fs.readFileSync("app.js", "utf8"), /peptideTemplates/);
+  assert.match(fs.readFileSync("app.js", "utf8"), /GLP-1 analog/);
+  assert.match(fs.readFileSync("app.js", "utf8"), /GIP\/GLP-1 analog/);
+  assert.match(fs.readFileSync("app.js", "utf8"), /GnRH analog/);
+  assert.match(fs.readFileSync("app.js", "utf8"), /somatostatin analog/);
   const examples = [
     "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",
     "H-Arg-Gly-Asp-Phe-Lys-NH2",
@@ -254,7 +261,12 @@ function bootApp() {
 
   app.setSequence("Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH");
   const copied = await app.copy();
-  assert.match(copied, /Protected Peptide Calculator Report/);
+  assert.match(copied, /R&D calculation report/);
+  assert.match(copied, /Chemistry library version: 1\.5\.0/);
+  assert.match(copied, /Template: Protected peptide \| Fmoc protected RGD-K/);
+  assert.match(copied, /Modification categories:/);
+  assert.match(copied, /N-terminal: 1/);
+  assert.match(copied, /side-chain protecting: 3/);
   assert.match(copied, /Protected average MW/);
 
   console.log("All acceptance checks passed.");

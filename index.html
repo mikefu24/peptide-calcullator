@@ -33,8 +33,16 @@
             <label for="sequenceInput">Protected peptide sequence</label>
             <textarea id="sequenceInput" spellcheck="false">Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH</textarea>
             <label class="example-control">
-              Built-in example
+              Template library
               <select id="exampleSelect"></select>
+            </label>
+            <label class="example-control compact-control">
+              Report profile
+              <select id="reportProfile">
+                <option value="rd">R&D calculation report</option>
+                <option value="quote">Quotation estimate report</option>
+                <option value="process">Process input report</option>
+              </select>
             </label>
             <div class="salt-controls">
               <label>
