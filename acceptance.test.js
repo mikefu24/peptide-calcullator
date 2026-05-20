@@ -256,6 +256,19 @@ function bootApp() {
   app.setSequence("Fmoc-Xxx-Gly-OH");
   assert.match(app.elements.get("#riskList").innerHTML, /Unknown amino acid: Xxx/);
 
+  app.setSequence("KKK");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#terminalSummary").innerHTML, /C端: OH/);
+  assert.doesNotMatch(app.elements.get("#riskList").innerHTML, /Missing C-terminal group/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /Lys/);
+
+  app.setSequence("FFKKKAAA");
+  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
+  assert.match(app.elements.get("#terminalSummary").innerHTML, /C端: OH/);
+  assert.doesNotMatch(app.elements.get("#riskList").innerHTML, /Missing C-terminal group/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /Phe/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /Ala/);
+
   app.setSequence("Fmoc-Gly-Gly");
   assert.match(app.elements.get("#riskList").innerHTML, /Missing C-terminal group/);
 

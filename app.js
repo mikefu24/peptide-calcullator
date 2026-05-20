@@ -162,6 +162,10 @@ function normalizeCurlySideChainToken(token) {
   return `${anchor}[${parts.slice(0, -1).join("-")}]`;
 }
 
+function isUnseparatedOneLetterSequence(input) {
+  return /^[A-Za-z]+$/.test(input) && input.length > 1 && [...input].every((char) => codeToResidue[char.toUpperCase()]);
+}
+
 function parseResidue(token) {
   const match = token.match(/^([A-Za-z][A-Za-z0-9]{0,9})(?:\(([^()]*)\))?(?:\[([^\]]*)\])?$/);
   if (!match) return { kind: "invalid", raw: token };
@@ -188,10 +192,11 @@ function parseSequence(input) {
     errors.push("Invalid sequence separator");
   }
 
-  const tokens = splitTopLevel(normalizedInput);
+  const inferredOneLetterSequence = isUnseparatedOneLetterSequence(normalizedInput);
+  const tokens = inferredOneLetterSequence ? [...normalizedInput].map((char) => char.toUpperCase()) : splitTopLevel(normalizedInput);
 
   const nTerminal = [];
-  const cTerminal = [];
+  const cTerminal = inferredOneLetterSequence ? ["OH"] : [];
   const aa = [];
   const unknown = [];
   const unknownMods = [];
