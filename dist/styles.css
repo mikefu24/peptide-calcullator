@@ -162,11 +162,19 @@ h2 {
   font-size: 15px;
 }
 
-.calculator-layout {
+.calculator-layout,
+.delta-module {
   display: grid;
   grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.45fr);
   gap: 16px;
+}
+
+.calculator-layout {
   min-height: 0;
+}
+
+.delta-module {
+  align-items: start;
 }
 
 .input-column,
@@ -352,8 +360,7 @@ input:focus,
 }
 
 .risk-panel,
-.report-panel,
-.side-reaction-panel {
+.report-panel {
   grid-column: 1 / -1;
 }
 
@@ -587,6 +594,7 @@ dd {
 
 @media (max-width: 1120px) {
   .calculator-layout,
+  .delta-module,
   .result-grid {
     grid-template-columns: 1fr;
   }
