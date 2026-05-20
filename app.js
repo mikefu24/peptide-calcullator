@@ -12,11 +12,14 @@ const {
   groupSiteTypes,
   chemistryLibrary,
   reportProfiles,
-  sppsReagents,
 } = globalThis.PeptideChemistryData;
+const { sideReactionMassDeltas = [], source: sideReactionSource = "" } = globalThis.PeptideSideReactionData || {};
 
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
+let kaiserPickMode = "sample";
+let kaiserSampleColor = null;
+let kaiserBlankColor = null;
 
 const els = {
   input: document.querySelector("#sequenceInput"),
@@ -50,16 +53,18 @@ const els = {
   exampleSelect: document.querySelector("#exampleSelect"),
   reportProfile: document.querySelector("#reportProfile"),
   themeSelect: document.querySelector("#themeSelect"),
-  targetScale: document.querySelector("#targetScale"),
-  resinLoading: document.querySelector("#resinLoading"),
-  aminoAcidEq: document.querySelector("#aminoAcidEq"),
-  couplingEq: document.querySelector("#couplingEq"),
-  baseEq: document.querySelector("#baseEq"),
-  couplingStrategy: document.querySelector("#couplingStrategy"),
-  couplingReagent: document.querySelector("#couplingReagent"),
-  sppsStrategyLabel: document.querySelector("#sppsStrategyLabel"),
-  sppsSummary: document.querySelector("#sppsSummary"),
-  sppsTable: document.querySelector("#sppsTable"),
+  deltaMassInput: document.querySelector("#deltaMassInput"),
+  deltaTolerance: document.querySelector("#deltaTolerance"),
+  deltaMatchCount: document.querySelector("#deltaMatchCount"),
+  sideReactionMatches: document.querySelector("#sideReactionMatches"),
+  kaiserPhotoInput: document.querySelector("#kaiserPhotoInput"),
+  kaiserCanvas: document.querySelector("#kaiserCanvas"),
+  kaiserMode: document.querySelector("#kaiserMode"),
+  setKaiserSample: document.querySelector("#setKaiserSample"),
+  setKaiserBlank: document.querySelector("#setKaiserBlank"),
+  kaiserSampleColor: document.querySelector("#kaiserSampleColor"),
+  kaiserBlankColor: document.querySelector("#kaiserBlankColor"),
+  kaiserScore: document.querySelector("#kaiserScore"),
 };
 
 function cloneFormula(formula = {}) {
@@ -455,100 +460,6 @@ function fixed2(value) {
   return Number.isFinite(value) ? value.toFixed(2) : "--";
 }
 
-function readNumber(element, fallback) {
-  if (!element || element.value === "") return fallback;
-  const value = Number(element?.value);
-  return Number.isFinite(value) && value >= 0 ? value : fallback;
-}
-
-function strategyMultiplier(strategy) {
-  if (strategy === "double") return 2;
-  if (strategy === "difficult") return 2.5;
-  return 1;
-}
-
-function calculateSpps(parsed) {
-  const scaleMmol = readNumber(els.targetScale, 0.1);
-  const loading = Math.max(readNumber(els.resinLoading, 0.35), 0.0001);
-  const aaEq = readNumber(els.aminoAcidEq, 3);
-  const couplingEq = readNumber(els.couplingEq, 2.9);
-  const baseEq = readNumber(els.baseEq, 6);
-  const strategy = els.couplingStrategy?.value || "single";
-  const multiplier = strategyMultiplier(strategy);
-  const residueCount = parsed.aa.length;
-  const couplingSteps = residueCount * multiplier;
-  const resinG = scaleMmol / loading;
-  const aaMmol = scaleMmol * aaEq * couplingSteps;
-  const couplingMmol = scaleMmol * couplingEq * couplingSteps;
-  const baseMmol = scaleMmol * baseEq * couplingSteps;
-  const reagent = els.couplingReagent?.value || "DIC/HOBt";
-  const aminoAcidG = (aaMmol * sppsReagents["Fmoc-AA-OH"].mw) / 1000;
-  const baseML = (baseMmol * sppsReagents.DIEA.mw) / (1000 * sppsReagents.DIEA.density);
-  const piperidineML = Math.max(residueCount, 1) * scaleMmol * 12 * multiplier;
-  const dmfML = Math.max(residueCount, 1) * scaleMmol * 75 * multiplier + resinG * 12;
-  const tfaML = Math.max(resinG * 10, scaleMmol * 8);
-  const rows = [
-    {
-      name: "Resin",
-      basis: `${fixed2(loading)} mmol/g`,
-      amount: resinG,
-      unit: "g",
-      cost: resinG * sppsReagents.resin.defaultPrice,
-    },
-    {
-      name: "Fmoc-AA-OH pool",
-      basis: `${fixed2(aaEq)} eq x ${fixed2(couplingSteps)} couplings`,
-      amount: aminoAcidG,
-      unit: "g",
-      cost: aminoAcidG * sppsReagents["Fmoc-AA-OH"].defaultPrice,
-    },
-  ];
-
-  if (reagent === "DIC/HOBt") {
-    const dicML = (couplingMmol * sppsReagents.DIC.mw) / (1000 * sppsReagents.DIC.density);
-    const hobtG = (couplingMmol * sppsReagents.HOBt.mw) / 1000;
-    rows.push(
-      { name: "DIC", basis: `${fixed2(couplingEq)} eq`, amount: dicML, unit: "mL", cost: dicML * sppsReagents.DIC.defaultPrice },
-      { name: "HOBt", basis: `${fixed2(couplingEq)} eq`, amount: hobtG, unit: "g", cost: hobtG * sppsReagents.HOBt.defaultPrice },
-    );
-  } else if (reagent === "DIC/Oxyma") {
-    const dicML = (couplingMmol * sppsReagents.DIC.mw) / (1000 * sppsReagents.DIC.density);
-    const oxymaG = (couplingMmol * sppsReagents.Oxyma.mw) / 1000;
-    rows.push(
-      { name: "DIC", basis: `${fixed2(couplingEq)} eq`, amount: dicML, unit: "mL", cost: dicML * sppsReagents.DIC.defaultPrice },
-      { name: "Oxyma Pure", basis: `${fixed2(couplingEq)} eq`, amount: oxymaG, unit: "g", cost: oxymaG * sppsReagents.Oxyma.defaultPrice },
-    );
-  } else if (reagent === "PyBOP/DIEA") {
-    const pybopG = (couplingMmol * sppsReagents.PyBOP.mw) / 1000;
-    rows.push({
-      name: "PyBOP",
-      basis: `${fixed2(couplingEq)} eq`,
-      amount: pybopG,
-      unit: "g",
-      cost: pybopG * sppsReagents.PyBOP.defaultPrice,
-    });
-  } else {
-    rows.push({
-      name: reagent,
-      basis: `${fixed2(couplingEq)} eq`,
-      amount: (couplingMmol * sppsReagents[reagent].mw) / 1000,
-      unit: "g",
-      cost: ((couplingMmol * sppsReagents[reagent].mw) / 1000) * sppsReagents[reagent].defaultPrice,
-    });
-  }
-
-  rows.push(
-    { name: "DIEA", basis: `${fixed2(baseEq)} eq`, amount: baseML, unit: "mL", cost: baseML * sppsReagents.DIEA.defaultPrice },
-    { name: "20% Piperidine/DMF", basis: "Fmoc deprotection", amount: piperidineML, unit: "mL", cost: piperidineML * sppsReagents.Piperidine.defaultPrice },
-    { name: "DMF", basis: "Coupling + wash solvent", amount: dmfML, unit: "mL", cost: dmfML * sppsReagents.DMF.defaultPrice },
-    { name: "TFA cocktail", basis: "Cleavage cocktail", amount: tfaML, unit: "mL", cost: tfaML * sppsReagents["TFA cocktail"].defaultPrice },
-  );
-
-  const totalCost = rows.reduce((sum, row) => sum + row.cost, 0);
-  const wasteML = dmfML + piperidineML + tfaML + baseML + rows.filter((row) => row.unit === "mL").reduce((sum, row) => ["DIEA", "20% Piperidine/DMF", "DMF", "TFA cocktail"].includes(row.name) ? sum : sum + row.amount, 0);
-  return { scaleMmol, loading, resinG, residueCount, couplingSteps, strategy, reagent, rows, totalCost, wasteML };
-}
-
 function applyTheme(theme) {
   const normalized = ["system", "light", "dark"].includes(theme) ? theme : "system";
   if (normalized === "system") {
@@ -593,6 +504,117 @@ function protectingCategorySummary(protectingList) {
   }, {});
 }
 
+function readSignedNumber(element, fallback) {
+  if (!element || element.value === "") return fallback;
+  const value = Number(element.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function findDeltaMatches() {
+  const query = readSignedNumber(els.deltaMassInput, NaN);
+  const tolerance = Math.max(0, readSignedNumber(els.deltaTolerance, 0.5));
+  if (!Number.isFinite(query)) return { query, tolerance, matches: [] };
+  const matches = sideReactionMassDeltas
+    .map((item) => ({ ...item, error: Math.abs(item.deltaAvg - query) }))
+    .filter((item) => item.error <= tolerance)
+    .sort((a, b) => a.error - b.error || a.deltaAvg - b.deltaAvg || a.modification.localeCompare(b.modification));
+  return { query, tolerance, matches };
+}
+
+function renderDeltaLookup() {
+  const { query, tolerance, matches } = findDeltaMatches();
+  if (els.deltaMatchCount) els.deltaMatchCount.textContent = `${matches.length} hits`;
+  if (!els.sideReactionMatches) return { query, tolerance, matches };
+  if (!Number.isFinite(query)) {
+    els.sideReactionMatches.innerHTML = `<article class="side-reaction-empty">Enter a Δmass value to search the impurity table.</article>`;
+    return { query, tolerance, matches };
+  }
+  if (!matches.length) {
+    els.sideReactionMatches.innerHTML = `<article class="side-reaction-empty">No match within ±${fixed2(tolerance)} Da.</article>`;
+    return { query, tolerance, matches };
+  }
+  els.sideReactionMatches.innerHTML = matches
+    .map(
+      (item) => `
+        <article class="side-reaction-card">
+          <div>
+            <strong>${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da</strong>
+            <span>error ${fixed2(item.error)} Da</span>
+          </div>
+          <h3>${item.modification}</h3>
+          <p>${item.category}</p>
+          <small>${item.residues.join(", ")} · ${item.source}</small>
+        </article>
+      `,
+    )
+    .join("");
+  return { query, tolerance, matches };
+}
+
+function blueIndex(color) {
+  if (!color) return null;
+  return color.b - (color.r + color.g) / 2;
+}
+
+function colorToText(color) {
+  return color ? `${color.r}, ${color.g}, ${color.b}` : "--";
+}
+
+function renderKaiserReadout() {
+  const sampleIndex = blueIndex(kaiserSampleColor);
+  const blankIndex = blueIndex(kaiserBlankColor);
+  const score = sampleIndex === null || blankIndex === null ? null : sampleIndex - blankIndex;
+  if (els.kaiserMode) els.kaiserMode.textContent = kaiserPickMode === "sample" ? "Pick sample" : "Pick blank";
+  if (els.kaiserSampleColor) els.kaiserSampleColor.textContent = colorToText(kaiserSampleColor);
+  if (els.kaiserBlankColor) els.kaiserBlankColor.textContent = colorToText(kaiserBlankColor);
+  if (!els.kaiserScore) return;
+  if (score === null) {
+    els.kaiserScore.textContent = "--";
+  } else if (score >= 28) {
+    els.kaiserScore.textContent = `${fixed2(score)} Positive`;
+  } else if (score >= 12) {
+    els.kaiserScore.textContent = `${fixed2(score)} Weak`;
+  } else {
+    els.kaiserScore.textContent = `${fixed2(score)} Negative`;
+  }
+}
+
+function drawKaiserImage(image) {
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!canvas || !context) return;
+  const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+  const width = image.width * scale;
+  const height = image.height * scale;
+  const x = (canvas.width - width) / 2;
+  const y = (canvas.height - height) / 2;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--panel-strong") || "#f0f4f5";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, x, y, width, height);
+  canvas.dataset.imageX = String(x);
+  canvas.dataset.imageY = String(y);
+  canvas.dataset.imageWidth = String(width);
+  canvas.dataset.imageHeight = String(height);
+}
+
+function sampleKaiserPoint(event) {
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!canvas || !context) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.round((event.clientX - rect.left) * (canvas.width / rect.width));
+  const y = Math.round((event.clientY - rect.top) * (canvas.height / rect.height));
+  const pixel = context.getImageData(x, y, 1, 1).data;
+  const color = { r: pixel[0], g: pixel[1], b: pixel[2] };
+  if (kaiserPickMode === "blank") {
+    kaiserBlankColor = color;
+  } else {
+    kaiserSampleColor = color;
+  }
+  renderKaiserReadout();
+}
+
 function buildCsv() {
   if (!currentResult) render();
   const result = currentResult;
@@ -616,12 +638,9 @@ function buildCsv() {
     ["C-terminus", result.cTermText],
     ["Modification categories", Object.entries(protectingCategorySummary(result.calc.protectingList)).map(([category, count]) => `${category}: ${count}`).join("; ") || "None"],
     ["Protecting groups", result.calc.protectingList.map((item) => `${item.label} @ ${item.site}`).join("; ")],
-    ["SPPS scale", `${fixed2(result.spps.scaleMmol)} mmol`],
-    ["SPPS resin", `${fixed2(result.spps.resinG)} g at ${fixed2(result.spps.loading)} mmol/g`],
-    ["SPPS strategy", `${result.spps.strategy}; ${result.spps.reagent}`],
-    ["SPPS estimated cost", `$${fixed2(result.spps.totalCost)}`],
-    ["SPPS estimated waste", `${fixed2(result.spps.wasteML)} mL`],
     ["Risks", result.risks.map((risk) => `[${risk.level}] ${risk.text}`).join("; ")],
+    ["Mass delta query", Number.isFinite(result.delta.query) ? `${fixed2(result.delta.query)} Da ±${fixed2(result.delta.tolerance)}` : ""],
+    ["Mass delta matches", result.delta.matches.map((item) => `${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da ${item.modification}`).join("; ")],
   ];
   return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
 }
@@ -662,7 +681,7 @@ function render() {
   addFormula(saltFormula, salt.formula, saltEquiv);
   const saltMass = formulaMass(saltFormula);
   const risks = assessRisks(parsed, calc);
-  const spps = calculateSpps(parsed);
+  const delta = renderDeltaLookup();
   const protectedFormulaText = formulaToText(calc.protectedFormula);
   const deprotectedFormulaText = formulaToText(calc.deprotectedFormula);
   const saltFormulaText =
@@ -718,30 +737,6 @@ function render() {
     : `<span class="tag">无保护基</span>`;
 
   els.riskList.innerHTML = risks.map((risk) => `<li class="${risk.level}">${risk.text}</li>`).join("");
-  els.sppsStrategyLabel.textContent = spps.strategy === "single" ? "Single" : spps.strategy === "double" ? "Double" : "Difficult";
-  els.sppsSummary.innerHTML = [
-    ["Scale", `${fixed2(spps.scaleMmol)} mmol`],
-    ["Resin", `${fixed2(spps.resinG)} g`],
-    ["Couplings", fixed2(spps.couplingSteps)],
-    ["Est. cost", `$${fixed2(spps.totalCost)}`],
-  ]
-    .map(([label, value]) => `<article><span>${label}</span><strong>${value}</strong></article>`)
-    .join("");
-  els.sppsTable.innerHTML = spps.rows
-    .map(
-      (row) => `
-        <div class="spps-row">
-          <strong>${row.name}</strong>
-          <dl>
-            <dt>Basis</dt><dd>${row.basis}</dd>
-            <dt>Amount</dt><dd>${fixed2(row.amount)} ${row.unit}</dd>
-            <dt>Est. cost</dt><dd>$${fixed2(row.cost)}</dd>
-            <dt>Waste impact</dt><dd>${row.unit === "mL" ? `${fixed2(row.amount)} mL` : "solid"}</dd>
-          </dl>
-        </div>
-      `,
-    )
-    .join("");
   const topRisk = risks.some((risk) => risk.level === "high")
     ? "High"
     : risks.some((risk) => risk.level === "medium")
@@ -754,7 +749,9 @@ function render() {
     : "- 无";
 
   const riskRows = risks.map((risk) => `- [${risk.level}] ${risk.text}`).join("\n");
-  const sppsRows = spps.rows.map((row) => `- ${row.name}: ${fixed2(row.amount)} ${row.unit}; ${row.basis}; est. cost $${fixed2(row.cost)}`).join("\n");
+  const deltaRows = delta.matches.length
+    ? delta.matches.map((item) => `- ${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da: ${item.modification} (${item.category})`).join("\n")
+    : "- No match";
   const template = selectedTemplate();
   const reportProfile = selectedReportProfile();
   const categoryRows = Object.entries(protectingCategorySummary(calc.protectingList))
@@ -766,7 +763,7 @@ function render() {
     reportProfile,
     parsed,
     calc,
-    spps,
+    delta,
     saltMass,
     risks,
     protectedFormulaText,
@@ -803,17 +800,12 @@ function render() {
     "Potential synthesis risks:",
     riskRows,
     "",
-    "SPPS reagent estimate:",
-    `- Target scale: ${fixed2(spps.scaleMmol)} mmol`,
-    `- Resin loading: ${fixed2(spps.loading)} mmol/g`,
-    `- Resin required: ${fixed2(spps.resinG)} g`,
-    `- Strategy: ${spps.strategy}; coupling reagent: ${spps.reagent}`,
-    `- Estimated solvent/waste volume: ${fixed2(spps.wasteML)} mL`,
-    `- Estimated material cost: $${fixed2(spps.totalCost)}`,
-    sppsRows,
+    "Mass delta lookup:",
+    Number.isFinite(delta.query) ? `- Query: ${fixed2(delta.query)} Da; tolerance ±${fixed2(delta.tolerance)} Da` : "- Query: not entered",
+    deltaRows,
     "",
     "Note: masses use residue formula + terminal H2O; protecting groups are modeled as net attached increments.",
-    "SPPS note: reagent, cost, and waste values are planning estimates; confirm actual resin swelling, wash volumes, supplier purity, and route-specific excess.",
+    `Side reaction note: Δmass matches use average mass deviations from ${sideReactionSource}; treat them as impurity investigation clues, not final structural confirmation.`,
   ].join("\n");
 }
 
@@ -821,17 +813,28 @@ els.input.addEventListener("input", render);
 els.saltType.addEventListener("change", render);
 els.saltEquiv.addEventListener("input", render);
 els.reportProfile?.addEventListener("change", render);
-[
-  els.targetScale,
-  els.resinLoading,
-  els.aminoAcidEq,
-  els.couplingEq,
-  els.baseEq,
-].forEach((element) => element?.addEventListener("input", render));
-[
-  els.couplingStrategy,
-  els.couplingReagent,
-].forEach((element) => element?.addEventListener("change", render));
+els.deltaMassInput?.addEventListener("input", render);
+els.deltaTolerance?.addEventListener("input", render);
+els.setKaiserSample?.addEventListener("click", () => {
+  kaiserPickMode = "sample";
+  renderKaiserReadout();
+});
+els.setKaiserBlank?.addEventListener("click", () => {
+  kaiserPickMode = "blank";
+  renderKaiserReadout();
+});
+els.kaiserCanvas?.addEventListener("click", sampleKaiserPoint);
+els.kaiserPhotoInput?.addEventListener("change", () => {
+  const file = els.kaiserPhotoInput.files?.[0];
+  if (!file || typeof FileReader === "undefined" || typeof Image === "undefined") return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    const image = new Image();
+    image.addEventListener("load", () => drawKaiserImage(image));
+    image.src = reader.result;
+  });
+  reader.readAsDataURL(file);
+});
 els.calculateButton.addEventListener("click", render);
 els.clearButton.addEventListener("click", () => {
   els.input.value = "";
@@ -880,4 +883,5 @@ els.copyReport.addEventListener("click", async () => {
 });
 
 applyTheme(localStorage.getItem(themeStorageKey) || "system");
+renderKaiserReadout();
 render();

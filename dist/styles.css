@@ -212,7 +212,8 @@ dt {
 .input-zone label,
 .example-control,
 .salt-controls label,
-.spps-controls label {
+.kaiser-tool label,
+.delta-controls label {
   display: grid;
   gap: 7px;
   color: var(--muted);
@@ -269,10 +270,57 @@ input:focus,
   margin-top: 12px;
 }
 
-.spps-controls {
+.delta-controls {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.kaiser-tool {
+  display: grid;
+  gap: 12px;
+}
+
+#kaiserCanvas {
+  width: 100%;
+  aspect-ratio: 12 / 7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+.kaiser-actions,
+.kaiser-readout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kaiser-readout {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kaiser-readout article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--panel-strong);
+}
+
+.kaiser-readout span,
+.kaiser-readout strong {
+  display: block;
+}
+
+.kaiser-readout span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.kaiser-readout strong {
+  margin-top: 4px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 .metrics {
@@ -305,7 +353,7 @@ input:focus,
 
 .risk-panel,
 .report-panel,
-.spps-panel {
+.side-reaction-panel {
   grid-column: 1 / -1;
 }
 
@@ -437,51 +485,47 @@ dd {
   background: var(--warning-soft);
 }
 
-.spps-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.spps-summary article {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px;
-  background: var(--panel-strong);
-}
-
-.spps-summary span,
-.spps-table dt {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.spps-summary strong,
-.spps-table dd {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-}
-
-.spps-table {
+.side-reaction-list {
   display: grid;
   gap: 8px;
 }
 
-.spps-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 1.1fr) repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  align-items: center;
+.side-reaction-card,
+.side-reaction-empty {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px;
   background: var(--field);
 }
 
-.spps-row dl {
-  display: contents;
+.side-reaction-card div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.side-reaction-card strong {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 18px;
+}
+
+.side-reaction-card span,
+.side-reaction-card small,
+.side-reaction-empty {
+  color: var(--muted);
+}
+
+.side-reaction-card h3 {
+  margin: 8px 0 6px;
+  font-size: 14px;
+}
+
+.side-reaction-card p {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .report-panel pre {
@@ -571,9 +615,9 @@ dd {
 
   .metrics,
   .salt-controls,
-  .spps-controls,
-  .spps-summary,
-  .spps-row,
+  .delta-controls,
+  .kaiser-actions,
+  .kaiser-readout,
   .sequence-list li,
   .action-bar {
     grid-template-columns: 1fr;

@@ -9,7 +9,7 @@ function escapeRegExp(value) {
 class Element {
   constructor(selector) {
     this.selector = selector;
-    this.value = selector === "#sequenceInput" ? "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH" : "";
+    this.value = selector === "#sequenceInput" ? "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH" : selector === "#deltaMassInput" ? "-18" : selector === "#deltaTolerance" ? "0.5" : "";
     this.textContent = "";
     this.innerHTML = "";
     this.dataset = {};
@@ -74,6 +74,7 @@ function bootApp() {
   };
 
   vm.runInNewContext(fs.readFileSync("chemistry-data.js", "utf8"), context);
+  vm.runInNewContext(fs.readFileSync("side-reactions-data.js", "utf8"), context);
   vm.runInNewContext(fs.readFileSync("app.js", "utf8"), context);
 
   return {
@@ -93,6 +94,7 @@ function bootApp() {
   const html = fs.readFileSync("index.html", "utf8");
   const css = fs.readFileSync("styles.css", "utf8");
   const data = fs.readFileSync("chemistry-data.js", "utf8");
+  const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
   ["Calculate", "Clear", "Copy Result", "Load Example"].forEach((label) => {
     assert.match(html, new RegExp(`>${label}<`));
   });
@@ -101,21 +103,22 @@ function bootApp() {
   assert.match(html, /id="themeSelect"/);
   assert.match(html, /id="reportProfile"/);
   assert.match(html, /chemistry-data\.js/);
+  assert.match(html, /side-reactions-data\.js/);
+  assert.match(html, /Kaiser Photo Assistant/);
+  assert.match(html, /Mass Delta Lookup/);
+  assert.match(html, /id="kaiserPhotoInput"/);
+  assert.match(html, /id="deltaMassInput"/);
+  assert.match(html, /id="sideReactionMatches"/);
   assert.match(data, /version:\s*"1\.5\.0"/);
   assert.match(data, /peptideTemplates/);
   assert.match(data, /GLP-1 analog/);
   assert.match(data, /GIP\/GLP-1 analog/);
   assert.match(data, /GnRH analog/);
   assert.match(data, /somatostatin analog/);
-  assert.match(data, /sppsReagents/);
-  assert.match(data, /HOBt/);
-  assert.match(data, /PyBOP/);
-  assert.match(data, /DIEA/);
-  assert.match(html, /DIC\/HOBt/);
-  assert.match(html, /DIC\/Oxyma/);
-  assert.match(html, /PyBOP\/DIEA/);
-  assert.doesNotMatch(html, /<option value="HATU">/);
-  assert.doesNotMatch(html, /<option value="HBTU">/);
+  assert.match(sideData, /sideReactionMassDeltas/);
+  assert.match(sideData, /Aspartimide\/glutarimide formation/);
+  assert.match(sideData, /Pbf derivatization/);
+  assert.doesNotMatch(html, /SPPS Reagent Calculator/);
   const examples = [
     "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",
     "H-Arg-Gly-Asp-Phe-Lys-NH2",
@@ -256,6 +259,13 @@ function bootApp() {
   app.setSequence("Fmoc-Xxx-Gly-OH");
   assert.match(app.elements.get("#riskList").innerHTML, /Unknown amino acid: Xxx/);
 
+  app.elements.get("#deltaMassInput").value = "-18";
+  app.elements.get("#deltaTolerance").value = "0.5";
+  app.setSequence("KKK");
+  assert.match(app.elements.get("#deltaMatchCount").textContent, /4 hits/);
+  assert.match(app.elements.get("#sideReactionMatches").innerHTML, /Aspartimide\/glutarimide formation/);
+  assert.match(app.elements.get("#sideReactionMatches").innerHTML, /Pyroglutamate formation from Glu/);
+
   app.setSequence("KKK");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.match(app.elements.get("#terminalSummary").innerHTML, /C端: OH/);
@@ -293,13 +303,9 @@ function bootApp() {
   assert.match(copied, /N-terminal: 1/);
   assert.match(copied, /side-chain protecting: 3/);
   assert.match(copied, /Protected average MW/);
-  assert.match(copied, /SPPS reagent estimate:/);
-  assert.match(copied, /Target scale: 0\.10 mmol/);
-  assert.match(copied, /Resin required: 0\.29 g/);
-  assert.match(copied, /Fmoc-AA-OH pool/);
-  assert.match(copied, /DIC/);
-  assert.match(copied, /HOBt/);
-  assert.match(copied, /DIEA/);
+  assert.match(copied, /Mass delta lookup:/);
+  assert.match(copied, /Aspartimide\/glutarimide formation/);
+  assert.doesNotMatch(copied, /SPPS reagent estimate:/);
 
   console.log("All acceptance checks passed.");
 })();

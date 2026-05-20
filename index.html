@@ -72,45 +72,40 @@
 
           <article class="panel">
             <div class="panel-head">
-              <h2>SPPS Reagent Calculator</h2>
-              <span>V2</span>
+              <h2>Kaiser Photo Assistant</h2>
+              <span id="kaiserMode">Manual</span>
             </div>
-            <div class="spps-controls">
+            <div class="kaiser-tool">
               <label>
-                Target scale (mmol)
-                <input id="targetScale" type="number" min="0.001" step="0.001" value="0.1" />
+                Kaiser test photo
+                <input id="kaiserPhotoInput" type="file" accept="image/*" />
+              </label>
+              <canvas id="kaiserCanvas" width="720" height="420"></canvas>
+              <div class="kaiser-actions">
+                <button class="button" id="setKaiserSample" type="button">Set Sample Point</button>
+                <button class="button" id="setKaiserBlank" type="button">Set Blank Point</button>
+              </div>
+              <div class="kaiser-readout">
+                <article><span>Sample RGB</span><strong id="kaiserSampleColor">--</strong></article>
+                <article><span>Blank RGB</span><strong id="kaiserBlankColor">--</strong></article>
+                <article><span>Blue score</span><strong id="kaiserScore">--</strong></article>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Mass Delta Lookup</h2>
+              <span id="deltaMatchCount">0 hits</span>
+            </div>
+            <div class="delta-controls">
+              <label>
+                Δmass (Da)
+                <input id="deltaMassInput" type="number" step="0.01" value="-18" />
               </label>
               <label>
-                Resin loading (mmol/g)
-                <input id="resinLoading" type="number" min="0.01" step="0.01" value="0.35" />
-              </label>
-              <label>
-                Amino acid eq
-                <input id="aminoAcidEq" type="number" min="0" step="0.1" value="3" />
-              </label>
-              <label>
-                Coupling reagent eq
-                <input id="couplingEq" type="number" min="0" step="0.1" value="2.9" />
-              </label>
-              <label>
-                DIEA eq
-                <input id="baseEq" type="number" min="0" step="0.1" value="6" />
-              </label>
-              <label>
-                Strategy
-                <select id="couplingStrategy">
-                  <option value="single">Single coupling</option>
-                  <option value="double">Double coupling</option>
-                  <option value="difficult">Difficult sequence strategy</option>
-                </select>
-              </label>
-              <label>
-                Coupling reagent
-                <select id="couplingReagent">
-                  <option value="DIC/HOBt">DIC/HOBt</option>
-                  <option value="DIC/Oxyma">DIC/Oxyma</option>
-                  <option value="PyBOP/DIEA">PyBOP/DIEA</option>
-                </select>
+                Tolerance
+                <input id="deltaTolerance" type="number" min="0" step="0.1" value="0.5" />
               </label>
             </div>
           </article>
@@ -174,13 +169,12 @@
               <ul id="riskList" class="risk-list"></ul>
             </article>
 
-            <article class="panel spps-panel">
+            <article class="panel side-reaction-panel">
               <div class="panel-head">
-                <h2>SPPS Reagent Plan</h2>
-                <span id="sppsStrategyLabel">--</span>
+                <h2>Mass Delta Matches</h2>
+                <span>Average Δmass</span>
               </div>
-              <div id="sppsSummary" class="spps-summary"></div>
-              <div id="sppsTable" class="spps-table"></div>
+              <div id="sideReactionMatches" class="side-reaction-list"></div>
             </article>
 
             <article class="panel report-panel">
@@ -203,6 +197,7 @@
     </main>
 
     <script src="./chemistry-data.js"></script>
+    <script src="./side-reactions-data.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

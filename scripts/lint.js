@@ -1,7 +1,7 @@
 const fs = require("fs");
 const { execFileSync } = require("child_process");
 
-const requiredFiles = ["index.html", "styles.css", "chemistry-data.js", "app.js", "acceptance.test.js"];
+const requiredFiles = ["index.html", "styles.css", "chemistry-data.js", "side-reactions-data.js", "app.js", "acceptance.test.js"];
 
 for (const file of requiredFiles) {
   if (!fs.existsSync(file)) {
@@ -17,6 +17,7 @@ const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("styles.css", "utf8");
 const js = fs.readFileSync("app.js", "utf8");
 const data = fs.readFileSync("chemistry-data.js", "utf8");
+const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
 
 [
   '<meta name="viewport"',
@@ -25,9 +26,10 @@ const data = fs.readFileSync("chemistry-data.js", "utf8");
   'id="copyReport"',
   'id="exampleSelect"',
   'id="reportProfile"',
-  'id="targetScale"',
-  'id="resinLoading"',
-  'id="sppsTable"',
+  'id="kaiserPhotoInput"',
+  'id="deltaMassInput"',
+  'id="sideReactionMatches"',
+  'side-reactions-data.js',
 ].forEach((needle) => {
   if (!html.includes(needle)) {
     throw new Error(`HTML lint failed: missing ${needle}`);
@@ -55,8 +57,18 @@ const data = fs.readFileSync("chemistry-data.js", "utf8");
   "peptideTemplates",
   "reportProfiles",
 ].forEach((needle) => {
-  if (!js.includes(needle) && !data.includes(needle)) {
+  if (!js.includes(needle) && !data.includes(needle) && !sideData.includes(needle)) {
     throw new Error(`JS lint failed: missing friendly error text ${needle}`);
+  }
+});
+
+[
+  "sideReactionMassDeltas",
+  "Aspartimide/glutarimide formation",
+  "Pbf derivatization",
+].forEach((needle) => {
+  if (!sideData.includes(needle)) {
+    throw new Error(`Side reaction data lint failed: missing ${needle}`);
   }
 });
 

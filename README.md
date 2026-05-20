@@ -32,16 +32,13 @@
 - 支持 TFA、HCl、AcOH 盐型当量修正
 - 汇总保护基列表
 - 根据常见序列模式提示合成风险，包括 Pro/Kaiser test 和 Asp-Gly/aspartimide
+- Kaiser Photo Assistant：上传 Kaiser test 图片，手动选择样品点和空白点，输出蓝色强度评分
+- Mass Delta Lookup：直接输入 `Δmass`，按容差查询可能副产物，不依赖当前序列输入
+- 副产物质量差数据库来自 `Side Reactions in Peptide Synthesis, Appendix I`，覆盖常见缺失/增加质量偏差
 - 生成可复制的结果报告
 - 响应式布局支持手机浏览器使用
 - 支持 `System / Light / Dark` 主题
-- V1.5 数据层拆分为 `chemistry-data.js`，集中维护残基库、保护基/修饰库、模板库、盐型和 SPPS 试剂基础数据
-- V2 SPPS Reagent Calculator：
-  - 输入目标规模和树脂 loading，自动计算树脂用量
-  - 支持 amino acid、coupling reagent、base 等量倍数
-  - 支持 single coupling、double coupling、difficult sequence strategy
-  - 估算 Fmoc-AA-OH、DIC/HOBt、DIC/Oxyma、PyBOP/DIEA、Piperidine/DMF、DMF、TFA cocktail 用量
-  - 输出理论成本和废液体积估算
+- V1.5 数据层拆分为 `chemistry-data.js` 和 `side-reactions-data.js`，集中维护残基库、保护基/修饰库、模板库、盐型和副产物质量差数据
 - 支持 `Copy Result` 和 `Load Example`
 
 友好错误提示：
@@ -69,6 +66,7 @@
 - 当前实现是纯前端 Web App，本地计算，不依赖服务器
 - 可直接部署到 Vercel、GitHub Pages 或任何静态托管
 - 化学数据集中在 `chemistry-data.js`，界面和计算逻辑在 `app.js`
+- 副产物 `Δmass` 查询数据集中在 `side-reactions-data.js`
 - 后续可平滑迁移到 React / Next.js / TypeScript
 - 后续可封装为 PWA 或桌面版
 

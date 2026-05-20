@@ -68,6 +68,7 @@ function bootApp() {
     console,
   };
   vm.runInNewContext(fs.readFileSync("chemistry-data.js", "utf8"), context);
+  vm.runInNewContext(fs.readFileSync("side-reactions-data.js", "utf8"), context);
   vm.runInNewContext(fs.readFileSync("app.js", "utf8"), context);
   return { elements, render: context.render };
 }
