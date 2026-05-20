@@ -1,153 +1,20 @@
-const atomMass = {
-  C: { avg: 12.011, mono: 12.0 },
-  H: { avg: 1.00794, mono: 1.00782503223 },
-  F: { avg: 18.998403163, mono: 18.99840316273 },
-  Cl: { avg: 35.453, mono: 34.968852682 },
-  Br: { avg: 79.904, mono: 78.9183376 },
-  N: { avg: 14.0067, mono: 14.00307400443 },
-  O: { avg: 15.9994, mono: 15.99491461957 },
-  S: { avg: 32.065, mono: 31.9720711744 },
-};
-
-const residues = {
-  Ala: { code: "A", formula: { C: 3, H: 5, N: 1, O: 1 }, sideChain: "methyl" },
-  Arg: { code: "R", formula: { C: 6, H: 12, N: 4, O: 1 }, sideChain: "guanidino", commonProtections: ["Pbf", "Pmc", "Mtr"] },
-  Asn: { code: "N", formula: { C: 4, H: 6, N: 2, O: 2 }, sideChain: "amide", commonProtections: ["Trt"] },
-  Asp: { code: "D", formula: { C: 4, H: 5, N: 1, O: 3 }, sideChain: "beta-carboxyl", commonProtections: ["OtBu", "OMe", "OBzl", "OAll"] },
-  Cys: { code: "C", formula: { C: 3, H: 5, N: 1, O: 1, S: 1 }, sideChain: "thiol", commonProtections: ["Trt", "Acm", "StBu", "tBu"] },
-  Gln: { code: "Q", formula: { C: 5, H: 8, N: 2, O: 2 }, sideChain: "amide", commonProtections: ["Trt"] },
-  Glu: { code: "E", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-carboxyl", commonProtections: ["OtBu", "OMe", "OBzl", "OAll"] },
-  Gly: { code: "G", formula: { C: 2, H: 3, N: 1, O: 1 }, sideChain: "hydrogen" },
-  His: { code: "H", formula: { C: 6, H: 7, N: 3, O: 1 }, sideChain: "imidazole", commonProtections: ["Trt", "Boc", "Dnp"] },
-  Ile: { code: "I", formula: { C: 6, H: 11, N: 1, O: 1 }, sideChain: "sec-butyl" },
-  Leu: { code: "L", formula: { C: 6, H: 11, N: 1, O: 1 }, sideChain: "isobutyl" },
-  Lys: { code: "K", formula: { C: 6, H: 12, N: 2, O: 1 }, sideChain: "epsilon-amino", commonProtections: ["Boc", "Dde", "ivDde", "Fmoc", "Alloc", "Mtt", "Cbz", "Z"] },
-  Met: { code: "M", formula: { C: 5, H: 9, N: 1, O: 1, S: 1 }, sideChain: "thioether" },
-  Phe: { code: "F", formula: { C: 9, H: 9, N: 1, O: 1 }, sideChain: "benzyl" },
-  Pro: { code: "P", formula: { C: 5, H: 7, N: 1, O: 1 }, sideChain: "secondary amine ring" },
-  Ser: { code: "S", formula: { C: 3, H: 5, N: 1, O: 2 }, sideChain: "hydroxyl", commonProtections: ["tBu", "Bzl", "Ac"] },
-  Thr: { code: "T", formula: { C: 4, H: 7, N: 1, O: 2 }, sideChain: "hydroxyl", commonProtections: ["tBu", "Bzl", "Ac"] },
-  Trp: { code: "W", formula: { C: 11, H: 10, N: 2, O: 1 }, sideChain: "indole", commonProtections: ["Boc", "Formyl"] },
-  Tyr: { code: "Y", formula: { C: 9, H: 9, N: 1, O: 2 }, sideChain: "phenol", commonProtections: ["tBu", "Bzl", "BrZ"] },
-  Val: { code: "V", formula: { C: 5, H: 9, N: 1, O: 1 }, sideChain: "isopropyl" },
-  Aib: { code: "Aib", formula: { C: 4, H: 7, N: 1, O: 1 }, sideChain: "alpha,alpha-dimethyl", special: true },
-  Pyr: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
-  pGlu: { code: "Pyr", formula: { C: 5, H: 5, N: 1, O: 2 }, sideChain: "pyroglutamyl lactam", special: true },
-  AEEA: { code: "AEEA", formula: { C: 6, H: 11, N: 1, O: 3 }, sideChainFormula: { C: 6, H: 12, N: 1, O: 3 }, sideChain: "PEG-like amino acid linker", special: true },
-  OEG: { code: "OEG", formula: { C: 4, H: 7, N: 1, O: 3 }, sideChain: "oligoethylene glycol amino acid linker", special: true },
-  Ado: { code: "Ado", formula: { C: 4, H: 7, N: 1, O: 3 }, sideChain: "8-amino-3,6-dioxaoctanoic acid linker alias", special: true },
-  gammaGlu: { code: "gGlu", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-glutamyl linker", special: true },
-  gGlu: { code: "gGlu", formula: { C: 5, H: 7, N: 1, O: 3 }, sideChain: "gamma-glutamyl linker", special: true },
-  MeLeu: { code: "MeLeu", formula: { C: 7, H: 13, N: 1, O: 1 }, sideChain: "2-methylleucine", special: true },
-  SerNH2: { code: "SerNH2", formula: { C: 3, H: 6, N: 2, O: 1 }, sideChain: "C-terminal serinamide motif", special: true },
-};
-
-const codeToResidue = Object.fromEntries(
-  Object.entries(residues).map(([name, data]) => [data.code, name]),
-);
-
-const groups = {
-  Fmoc: { label: "Fmoc", formula: { C: 15, H: 10, O: 2 }, labile: "base", class: "N-protecting" },
-  Boc: { label: "Boc", formula: { C: 5, H: 8, O: 2 }, labile: "acid", class: "amine protecting" },
-  Cbz: { label: "Cbz/Z", formula: { C: 8, H: 6, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
-  Z: { label: "Cbz/Z", formula: { C: 8, H: 6, O: 2 }, labile: "hydrogenolysis", class: "amine protecting" },
-  Trt: { label: "Trt", formula: { C: 19, H: 14 }, labile: "acid", class: "side-chain protecting" },
-  tBu: { label: "tBu", formula: { C: 4, H: 8 }, labile: "acid", class: "hydroxyl protecting" },
-  OtBu: { label: "OtBu", formula: { C: 4, H: 8 }, labile: "acid", class: "carboxyl protecting" },
-  Pbf: { label: "Pbf", formula: { C: 13, H: 16, O: 3, S: 1 }, labile: "acid", class: "guanidino protecting" },
-  Pmc: { label: "Pmc", formula: { C: 12, H: 16, O: 3, S: 1 }, labile: "acid", class: "guanidino protecting" },
-  Mtr: { label: "Mtr", formula: { C: 10, H: 12, O: 3, S: 1 }, labile: "acid", class: "guanidino protecting" },
-  Mtt: { label: "Mtt", formula: { C: 20, H: 16 }, labile: "acid", class: "amine protecting" },
-  Dde: { label: "Dde", formula: { C: 10, H: 12, O: 2 }, labile: "hydrazine", class: "orthogonal amine protecting" },
-  ivDde: { label: "ivDde", formula: { C: 14, H: 18, O: 2 }, labile: "hydrazine", class: "orthogonal amine protecting" },
-  Alloc: { label: "Alloc", formula: { C: 4, H: 4, O: 2 }, labile: "palladium", class: "amine protecting" },
-  Ac: { label: "Ac", formula: { C: 2, H: 2, O: 1 }, labile: "stable", class: "acyl modification" },
-  Acm: { label: "Acm", formula: { C: 3, H: 5, N: 1, O: 1 }, labile: "iodine/mercury", class: "thiol protecting" },
-  StBu: { label: "StBu", formula: { C: 4, H: 8, S: 1 }, labile: "reducing", class: "thiol protecting" },
-  Bzl: { label: "Bzl", formula: { C: 7, H: 6 }, labile: "hydrogenolysis/HF", class: "side-chain protecting" },
-  OBzl: { label: "OBzl", formula: { C: 7, H: 6 }, labile: "hydrogenolysis/HF", class: "carboxyl protecting" },
-  OMe: { label: "OMe", formula: { C: 1, H: 2 }, labile: "saponification", class: "carboxyl ester" },
-  OAll: { label: "OAll", formula: { C: 3, H: 4 }, labile: "palladium", class: "carboxyl protecting" },
-  BrZ: { label: "BrZ", formula: { C: 8, H: 5, Br: 1, O: 2 }, labile: "acid/HF", class: "phenol protecting" },
-  Dnp: { label: "Dnp", formula: { C: 6, H: 2, N: 2, O: 4 }, labile: "thiolysis", class: "imidazole protecting" },
-  Formyl: { label: "Formyl", formula: { C: 1, O: 1 }, labile: "base", class: "indole protecting" },
-  C18: { label: "C18 diacid residue", formula: { C: 18, H: 32, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
-  C20: { label: "C20 diacid residue", formula: { C: 20, H: 36, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
-  C18Diacid: { label: "C18 diacid residue", formula: { C: 18, H: 32, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
-  C20Diacid: { label: "C20 diacid residue", formula: { C: 20, H: 36, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
-  Octadecanedioyl: { label: "C18 diacid residue", formula: { C: 18, H: 32, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
-  Eicosanedioyl: { label: "C20 diacid residue", formula: { C: 20, H: 36, O: 3 }, labile: "stable", class: "albumin-binding diacid residue" },
-  "C20-OtBu": { label: "C20-OtBu", formula: { C: 24, H: 44, O: 3 }, deprotectedFormula: { C: 20, H: 36, O: 3 }, labile: "acid", class: "albumin-binding diacid tert-butyl ester" },
-  "C18-OtBu": { label: "C18-OtBu", formula: { C: 22, H: 40, O: 3 }, deprotectedFormula: { C: 18, H: 32, O: 3 }, labile: "acid", class: "albumin-binding diacid tert-butyl ester" },
-  DOTA: { label: "DOTA", formula: { C: 16, H: 25, N: 4, O: 7 }, labile: "stable", class: "chelator" },
-  NOTA: { label: "NOTA", formula: { C: 12, H: 20, N: 4, O: 5 }, labile: "stable", class: "chelator" },
-  DTPA: { label: "DTPA", formula: { C: 14, H: 20, N: 3, O: 9 }, labile: "stable", class: "chelator" },
-  Hynic: { label: "Hynic", formula: { C: 6, H: 6, N: 3, O: 1 }, labile: "stable", class: "chelator" },
-  HYNIC: { label: "Hynic", formula: { C: 6, H: 6, N: 3, O: 1 }, labile: "stable", class: "chelator" },
-};
-
-const terminalGroups = {
-  H: { name: "H-", formula: {} },
-  OH: { name: "-OH", formula: {} },
-  NH2: { name: "-NH2", formula: { H: -1, O: -1, N: 1 } },
-  OMe: { name: "-OMe", formula: { C: 1, H: 2 } },
-  OEt: { name: "-OEt", formula: { C: 2, H: 4 } },
-};
-
-const salts = {
-  free: { label: "Free", formula: {} },
-  tfa: { label: "TFA", formula: { C: 2, H: 1, F: 3, O: 2 } },
-  hcl: { label: "HCl", formula: { H: 1, Cl: 1 } },
-  acoh: { label: "AcOH", formula: { C: 2, H: 4, O: 2 } },
-};
-
-const water = { H: 2, O: 1 };
-const defaultExample = "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH";
-const peptideTemplates = [
-  { family: "Protected peptide", name: "Fmoc protected RGD-K", reportUse: "R&D", sequence: "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH" },
-  { family: "Unprotected peptide", name: "RGD-FK amide", reportUse: "R&D", sequence: "H-Arg-Gly-Asp-Phe-Lys-NH2" },
-  { family: "N-modified peptide", name: "Ac-GGF", reportUse: "Quote", sequence: "Ac-Gly-Gly-Phe-OH" },
-  { family: "Protected peptide", name: "Boc AVL-F methyl ester", reportUse: "R&D", sequence: "Boc-Ala-Val-Leu-Phe-OMe" },
-  { family: "Difficult sequence", name: "Fmoc Lys-Boc GP", reportUse: "Process", sequence: "Fmoc-Lys(Boc)-Gly-Pro-OH" },
-  { family: "Special residue", name: "Aib/Pyr model", reportUse: "R&D", sequence: "Fmoc-Aib-Gly-Pyr-OH" },
-  { family: "Linker chemistry", name: "Dde/AEEA/Glu/Tyr model", reportUse: "Process", sequence: "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH" },
-  { family: "GLP-1 analog", name: "Semaglutide-like C18 motif", reportUse: "R&D", sequence: "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH" },
-  { family: "GIP/GLP-1 analog", name: "Tirzepatide-like C20 motif", reportUse: "R&D", sequence: "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2" },
-  { family: "GLP-1/GCG analog", name: "Retatrutide-like C20 motif", reportUse: "R&D", sequence: "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2" },
-  { family: "Fatty acid linker", name: "Protected C20-OtBu side chain", reportUse: "Process", sequence: "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH" },
-  { family: "GIP/GLP-1 analog", name: "Tirzepatide full formula validation", reportUse: "R&D", sequence: "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2" },
-  { family: "Fatty acid linker", name: "C20-Glu-AEEA protected model", reportUse: "Process", sequence: "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH" },
-  { family: "Chelator peptide", name: "DOTA-Lys-Gly", reportUse: "Quote", sequence: "DOTA-Lys-Gly-OH" },
-];
-const builtInExamples = peptideTemplates.map((template) => template.sequence);
-const groupSiteTypes = {
-  backboneN: new Set(["Fmoc", "Boc", "Cbz", "Z", "Alloc", "Dde", "ivDde", "Ac"]),
-  sideChainProtecting: new Set(["Boc", "Trt", "tBu", "OtBu", "Pbf", "Pmc", "Mtr", "Mtt", "Dde", "ivDde", "Alloc", "Acm", "StBu", "Bzl", "OBzl", "OMe", "OAll", "BrZ", "Dnp", "Formyl", "C18", "C20", "C18Diacid", "C20Diacid", "Octadecanedioyl", "Eicosanedioyl"]),
-  linker: new Set(["AEEA", "OEG", "Ado", "gammaGlu", "gGlu"]),
-  fattyAcid: new Set(["C18", "C20", "C18Diacid", "C20Diacid", "Octadecanedioyl", "Eicosanedioyl", "C18-OtBu", "C20-OtBu"]),
-  chelator: new Set(["DOTA", "NOTA", "DTPA", "Hynic", "HYNIC"]),
-  salt: new Set(Object.keys(salts)),
-};
-const chemistryLibrary = {
-  version: "1.5.0",
+const {
   atomMass,
   residues,
+  codeToResidue,
   groups,
   terminalGroups,
   salts,
-  templates: peptideTemplates,
-  categories: {
-    residues: ["canonical amino acid", "special amino acid", "linker residue"],
-    modifications: ["N-terminal", "C-terminal", "side-chain protecting", "linker", "fatty acid", "chelator", "salt"],
-    peptideFamilies: ["GLP-1 analog", "GIP/GLP-1 analog", "GLP-1/GCG analog", "GnRH analog", "somatostatin analog"],
-  },
-  siteTypes: groupSiteTypes,
-};
-const reportProfiles = {
-  rd: "R&D calculation report",
-  quote: "Quotation estimate report",
-  process: "Process input report",
-};
+  water,
+  defaultExample,
+  peptideTemplates,
+  builtInExamples,
+  groupSiteTypes,
+  chemistryLibrary,
+  reportProfiles,
+  sppsReagents,
+} = globalThis.PeptideChemistryData;
+
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
 
@@ -183,6 +50,16 @@ const els = {
   exampleSelect: document.querySelector("#exampleSelect"),
   reportProfile: document.querySelector("#reportProfile"),
   themeSelect: document.querySelector("#themeSelect"),
+  targetScale: document.querySelector("#targetScale"),
+  resinLoading: document.querySelector("#resinLoading"),
+  aminoAcidEq: document.querySelector("#aminoAcidEq"),
+  couplingEq: document.querySelector("#couplingEq"),
+  baseEq: document.querySelector("#baseEq"),
+  couplingStrategy: document.querySelector("#couplingStrategy"),
+  couplingReagent: document.querySelector("#couplingReagent"),
+  sppsStrategyLabel: document.querySelector("#sppsStrategyLabel"),
+  sppsSummary: document.querySelector("#sppsSummary"),
+  sppsTable: document.querySelector("#sppsTable"),
 };
 
 function cloneFormula(formula = {}) {
@@ -569,6 +446,88 @@ function fixed(value) {
   return Number.isFinite(value) ? value.toFixed(4) : "--";
 }
 
+function fixed2(value) {
+  return Number.isFinite(value) ? value.toFixed(2) : "--";
+}
+
+function readNumber(element, fallback) {
+  if (!element || element.value === "") return fallback;
+  const value = Number(element?.value);
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+function strategyMultiplier(strategy) {
+  if (strategy === "double") return 2;
+  if (strategy === "difficult") return 2.5;
+  return 1;
+}
+
+function calculateSpps(parsed) {
+  const scaleMmol = readNumber(els.targetScale, 0.1);
+  const loading = Math.max(readNumber(els.resinLoading, 0.35), 0.0001);
+  const aaEq = readNumber(els.aminoAcidEq, 3);
+  const couplingEq = readNumber(els.couplingEq, 2.9);
+  const baseEq = readNumber(els.baseEq, 6);
+  const strategy = els.couplingStrategy?.value || "single";
+  const multiplier = strategyMultiplier(strategy);
+  const residueCount = parsed.aa.length;
+  const couplingSteps = residueCount * multiplier;
+  const resinG = scaleMmol / loading;
+  const aaMmol = scaleMmol * aaEq * couplingSteps;
+  const couplingMmol = scaleMmol * couplingEq * couplingSteps;
+  const baseMmol = scaleMmol * baseEq * couplingSteps;
+  const reagent = els.couplingReagent?.value || "HATU";
+  const aminoAcidG = (aaMmol * sppsReagents["Fmoc-AA-OH"].mw) / 1000;
+  const baseML = (baseMmol * sppsReagents.DIPEA.mw) / (1000 * sppsReagents.DIPEA.density);
+  const piperidineML = Math.max(residueCount, 1) * scaleMmol * 12 * multiplier;
+  const dmfML = Math.max(residueCount, 1) * scaleMmol * 75 * multiplier + resinG * 12;
+  const tfaML = Math.max(resinG * 10, scaleMmol * 8);
+  const rows = [
+    {
+      name: "Resin",
+      basis: `${fixed2(loading)} mmol/g`,
+      amount: resinG,
+      unit: "g",
+      cost: resinG * sppsReagents.resin.defaultPrice,
+    },
+    {
+      name: "Fmoc-AA-OH pool",
+      basis: `${fixed2(aaEq)} eq x ${fixed2(couplingSteps)} couplings`,
+      amount: aminoAcidG,
+      unit: "g",
+      cost: aminoAcidG * sppsReagents["Fmoc-AA-OH"].defaultPrice,
+    },
+  ];
+
+  if (reagent === "DIC/Oxyma") {
+    const dicML = (couplingMmol * sppsReagents.DIC.mw) / (1000 * sppsReagents.DIC.density);
+    const oxymaG = (couplingMmol * sppsReagents.Oxyma.mw) / 1000;
+    rows.push(
+      { name: "DIC", basis: `${fixed2(couplingEq)} eq`, amount: dicML, unit: "mL", cost: dicML * sppsReagents.DIC.defaultPrice },
+      { name: "Oxyma Pure", basis: `${fixed2(couplingEq)} eq`, amount: oxymaG, unit: "g", cost: oxymaG * sppsReagents.Oxyma.defaultPrice },
+    );
+  } else {
+    rows.push({
+      name: reagent,
+      basis: `${fixed2(couplingEq)} eq`,
+      amount: (couplingMmol * sppsReagents[reagent].mw) / 1000,
+      unit: "g",
+      cost: ((couplingMmol * sppsReagents[reagent].mw) / 1000) * sppsReagents[reagent].defaultPrice,
+    });
+  }
+
+  rows.push(
+    { name: "DIPEA", basis: `${fixed2(baseEq)} eq`, amount: baseML, unit: "mL", cost: baseML * sppsReagents.DIPEA.defaultPrice },
+    { name: "20% Piperidine/DMF", basis: "Fmoc deprotection", amount: piperidineML, unit: "mL", cost: piperidineML * sppsReagents.Piperidine.defaultPrice },
+    { name: "DMF", basis: "Coupling + wash solvent", amount: dmfML, unit: "mL", cost: dmfML * sppsReagents.DMF.defaultPrice },
+    { name: "TFA cocktail", basis: "Cleavage cocktail", amount: tfaML, unit: "mL", cost: tfaML * sppsReagents["TFA cocktail"].defaultPrice },
+  );
+
+  const totalCost = rows.reduce((sum, row) => sum + row.cost, 0);
+  const wasteML = dmfML + piperidineML + tfaML + baseML + rows.filter((row) => row.unit === "mL").reduce((sum, row) => ["DIPEA", "20% Piperidine/DMF", "DMF", "TFA cocktail"].includes(row.name) ? sum : sum + row.amount, 0);
+  return { scaleMmol, loading, resinG, residueCount, couplingSteps, strategy, reagent, rows, totalCost, wasteML };
+}
+
 function applyTheme(theme) {
   const normalized = ["system", "light", "dark"].includes(theme) ? theme : "system";
   if (normalized === "system") {
@@ -636,6 +595,11 @@ function buildCsv() {
     ["C-terminus", result.cTermText],
     ["Modification categories", Object.entries(protectingCategorySummary(result.calc.protectingList)).map(([category, count]) => `${category}: ${count}`).join("; ") || "None"],
     ["Protecting groups", result.calc.protectingList.map((item) => `${item.label} @ ${item.site}`).join("; ")],
+    ["SPPS scale", `${fixed2(result.spps.scaleMmol)} mmol`],
+    ["SPPS resin", `${fixed2(result.spps.resinG)} g at ${fixed2(result.spps.loading)} mmol/g`],
+    ["SPPS strategy", `${result.spps.strategy}; ${result.spps.reagent}`],
+    ["SPPS estimated cost", `$${fixed2(result.spps.totalCost)}`],
+    ["SPPS estimated waste", `${fixed2(result.spps.wasteML)} mL`],
     ["Risks", result.risks.map((risk) => `[${risk.level}] ${risk.text}`).join("; ")],
   ];
   return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
@@ -677,6 +641,7 @@ function render() {
   addFormula(saltFormula, salt.formula, saltEquiv);
   const saltMass = formulaMass(saltFormula);
   const risks = assessRisks(parsed, calc);
+  const spps = calculateSpps(parsed);
   const protectedFormulaText = formulaToText(calc.protectedFormula);
   const deprotectedFormulaText = formulaToText(calc.deprotectedFormula);
   const saltFormulaText =
@@ -732,6 +697,30 @@ function render() {
     : `<span class="tag">无保护基</span>`;
 
   els.riskList.innerHTML = risks.map((risk) => `<li class="${risk.level}">${risk.text}</li>`).join("");
+  els.sppsStrategyLabel.textContent = spps.strategy === "single" ? "Single" : spps.strategy === "double" ? "Double" : "Difficult";
+  els.sppsSummary.innerHTML = [
+    ["Scale", `${fixed2(spps.scaleMmol)} mmol`],
+    ["Resin", `${fixed2(spps.resinG)} g`],
+    ["Couplings", fixed2(spps.couplingSteps)],
+    ["Est. cost", `$${fixed2(spps.totalCost)}`],
+  ]
+    .map(([label, value]) => `<article><span>${label}</span><strong>${value}</strong></article>`)
+    .join("");
+  els.sppsTable.innerHTML = spps.rows
+    .map(
+      (row) => `
+        <div class="spps-row">
+          <strong>${row.name}</strong>
+          <dl>
+            <dt>Basis</dt><dd>${row.basis}</dd>
+            <dt>Amount</dt><dd>${fixed2(row.amount)} ${row.unit}</dd>
+            <dt>Est. cost</dt><dd>$${fixed2(row.cost)}</dd>
+            <dt>Waste impact</dt><dd>${row.unit === "mL" ? `${fixed2(row.amount)} mL` : "solid"}</dd>
+          </dl>
+        </div>
+      `,
+    )
+    .join("");
   const topRisk = risks.some((risk) => risk.level === "high")
     ? "High"
     : risks.some((risk) => risk.level === "medium")
@@ -744,6 +733,7 @@ function render() {
     : "- 无";
 
   const riskRows = risks.map((risk) => `- [${risk.level}] ${risk.text}`).join("\n");
+  const sppsRows = spps.rows.map((row) => `- ${row.name}: ${fixed2(row.amount)} ${row.unit}; ${row.basis}; est. cost $${fixed2(row.cost)}`).join("\n");
   const template = selectedTemplate();
   const reportProfile = selectedReportProfile();
   const categoryRows = Object.entries(protectingCategorySummary(calc.protectingList))
@@ -755,6 +745,7 @@ function render() {
     reportProfile,
     parsed,
     calc,
+    spps,
     saltMass,
     risks,
     protectedFormulaText,
@@ -791,7 +782,17 @@ function render() {
     "Potential synthesis risks:",
     riskRows,
     "",
+    "SPPS reagent estimate:",
+    `- Target scale: ${fixed2(spps.scaleMmol)} mmol`,
+    `- Resin loading: ${fixed2(spps.loading)} mmol/g`,
+    `- Resin required: ${fixed2(spps.resinG)} g`,
+    `- Strategy: ${spps.strategy}; coupling reagent: ${spps.reagent}`,
+    `- Estimated solvent/waste volume: ${fixed2(spps.wasteML)} mL`,
+    `- Estimated material cost: $${fixed2(spps.totalCost)}`,
+    sppsRows,
+    "",
     "Note: masses use residue formula + terminal H2O; protecting groups are modeled as net attached increments.",
+    "SPPS note: reagent, cost, and waste values are planning estimates; confirm actual resin swelling, wash volumes, supplier purity, and route-specific excess.",
   ].join("\n");
 }
 
@@ -799,6 +800,17 @@ els.input.addEventListener("input", render);
 els.saltType.addEventListener("change", render);
 els.saltEquiv.addEventListener("input", render);
 els.reportProfile?.addEventListener("change", render);
+[
+  els.targetScale,
+  els.resinLoading,
+  els.aminoAcidEq,
+  els.couplingEq,
+  els.baseEq,
+].forEach((element) => element?.addEventListener("input", render));
+[
+  els.couplingStrategy,
+  els.couplingReagent,
+].forEach((element) => element?.addEventListener("change", render));
 els.calculateButton.addEventListener("click", render);
 els.clearButton.addEventListener("click", () => {
   els.input.value = "";

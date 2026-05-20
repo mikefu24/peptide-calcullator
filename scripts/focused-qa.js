@@ -51,6 +51,7 @@ function bootApp() {
     },
     console,
   };
+  vm.runInNewContext(fs.readFileSync("chemistry-data.js", "utf8"), context);
   vm.runInNewContext(fs.readFileSync("app.js", "utf8"), context);
   return { elements, render: context.render };
 }
@@ -98,7 +99,7 @@ const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("styles.css", "utf8");
 assert.match(html, /<meta name="viewport"/);
 assert.match(css, /@media \(max-width:\s*720px\)/);
-assert.match(css, /\.metrics,\s*\n\s*\.salt-controls,\s*\n\s*\.sequence-list li,\s*\n\s*\.action-bar\s*{\s*\n\s*grid-template-columns:\s*1fr;/);
+assert.match(css, /\.metrics,[\s\S]*?\.action-bar\s*{\s*\n\s*grid-template-columns:\s*1fr;/);
 console.log("PASS 5 | Mobile browser support checks: viewport meta and single-column responsive layout");
 
 setSequence(app, "Fmoc-Arg(ABC)-Gly-OH");

@@ -69,6 +69,51 @@
             <div id="terminalSummary" class="terminal-summary"></div>
             <ol id="parsedSequence" class="sequence-list"></ol>
           </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>SPPS Reagent Calculator</h2>
+              <span>V2</span>
+            </div>
+            <div class="spps-controls">
+              <label>
+                Target scale (mmol)
+                <input id="targetScale" type="number" min="0.001" step="0.001" value="0.1" />
+              </label>
+              <label>
+                Resin loading (mmol/g)
+                <input id="resinLoading" type="number" min="0.01" step="0.01" value="0.35" />
+              </label>
+              <label>
+                Amino acid eq
+                <input id="aminoAcidEq" type="number" min="0" step="0.1" value="3" />
+              </label>
+              <label>
+                Coupling reagent eq
+                <input id="couplingEq" type="number" min="0" step="0.1" value="2.9" />
+              </label>
+              <label>
+                Base eq
+                <input id="baseEq" type="number" min="0" step="0.1" value="6" />
+              </label>
+              <label>
+                Strategy
+                <select id="couplingStrategy">
+                  <option value="single">Single coupling</option>
+                  <option value="double">Double coupling</option>
+                  <option value="difficult">Difficult sequence strategy</option>
+                </select>
+              </label>
+              <label>
+                Coupling reagent
+                <select id="couplingReagent">
+                  <option value="HATU">HATU</option>
+                  <option value="HBTU">HBTU</option>
+                  <option value="DIC/Oxyma">DIC/Oxyma</option>
+                </select>
+              </label>
+            </div>
+          </article>
         </section>
 
         <aside class="results-column" aria-label="计算结果">
@@ -129,6 +174,15 @@
               <ul id="riskList" class="risk-list"></ul>
             </article>
 
+            <article class="panel spps-panel">
+              <div class="panel-head">
+                <h2>SPPS Reagent Plan</h2>
+                <span id="sppsStrategyLabel">--</span>
+              </div>
+              <div id="sppsSummary" class="spps-summary"></div>
+              <div id="sppsTable" class="spps-table"></div>
+            </article>
+
             <article class="panel report-panel">
               <div class="panel-head">
                 <h2>Report Preview</h2>
@@ -148,6 +202,7 @@
       </footer>
     </main>
 
+    <script src="./chemistry-data.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

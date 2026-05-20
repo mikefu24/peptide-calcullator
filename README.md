@@ -4,7 +4,8 @@
 
 在线访问：
 
-- Netlify: https://protected-peptide-calculator.netlify.app
+- Cloudflare Pages: https://protected-peptide-calculator.pages.dev
+- Netlify legacy: https://protected-peptide-calculator.netlify.app
 
 当前功能：
 
@@ -34,7 +35,14 @@
 - 生成可复制的结果报告
 - 响应式布局支持手机浏览器使用
 - 支持 `System / Light / Dark` 主题
-- 支持 `Copy Result`、`Export CSV`、`Export PDF`
+- V1.5 数据层拆分为 `chemistry-data.js`，集中维护残基库、保护基/修饰库、模板库、盐型和 SPPS 试剂基础数据
+- V2 SPPS Reagent Calculator：
+  - 输入目标规模和树脂 loading，自动计算树脂用量
+  - 支持 amino acid、coupling reagent、base 等量倍数
+  - 支持 single coupling、double coupling、difficult sequence strategy
+  - 估算 Fmoc-AA-OH、HATU/HBTU 或 DIC/Oxyma、DIPEA、Piperidine/DMF、DMF、TFA cocktail 用量
+  - 输出理论成本和废液体积估算
+- 支持 `Copy Result` 和 `Load Example`
 
 友好错误提示：
 
@@ -60,7 +68,8 @@
 
 - 当前实现是纯前端 Web App，本地计算，不依赖服务器
 - 可直接部署到 Vercel、GitHub Pages 或任何静态托管
-- 核心计算逻辑集中在 `app.js`，后续可平滑迁移到 React / Next.js / TypeScript
+- 化学数据集中在 `chemistry-data.js`，界面和计算逻辑在 `app.js`
+- 后续可平滑迁移到 React / Next.js / TypeScript
 - 后续可封装为 PWA 或桌面版
 
 验收测试：

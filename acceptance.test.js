@@ -73,6 +73,7 @@ function bootApp() {
     console,
   };
 
+  vm.runInNewContext(fs.readFileSync("chemistry-data.js", "utf8"), context);
   vm.runInNewContext(fs.readFileSync("app.js", "utf8"), context);
 
   return {
@@ -91,6 +92,7 @@ function bootApp() {
 (async () => {
   const html = fs.readFileSync("index.html", "utf8");
   const css = fs.readFileSync("styles.css", "utf8");
+  const data = fs.readFileSync("chemistry-data.js", "utf8");
   ["Calculate", "Clear", "Copy Result", "Load Example"].forEach((label) => {
     assert.match(html, new RegExp(`>${label}<`));
   });
@@ -98,12 +100,14 @@ function bootApp() {
   assert.doesNotMatch(html, />Export PDF</);
   assert.match(html, /id="themeSelect"/);
   assert.match(html, /id="reportProfile"/);
-  assert.match(fs.readFileSync("app.js", "utf8"), /version:\s*"1\.5\.0"/);
-  assert.match(fs.readFileSync("app.js", "utf8"), /peptideTemplates/);
-  assert.match(fs.readFileSync("app.js", "utf8"), /GLP-1 analog/);
-  assert.match(fs.readFileSync("app.js", "utf8"), /GIP\/GLP-1 analog/);
-  assert.match(fs.readFileSync("app.js", "utf8"), /GnRH analog/);
-  assert.match(fs.readFileSync("app.js", "utf8"), /somatostatin analog/);
+  assert.match(html, /chemistry-data\.js/);
+  assert.match(data, /version:\s*"1\.5\.0"/);
+  assert.match(data, /peptideTemplates/);
+  assert.match(data, /GLP-1 analog/);
+  assert.match(data, /GIP\/GLP-1 analog/);
+  assert.match(data, /GnRH analog/);
+  assert.match(data, /somatostatin analog/);
+  assert.match(data, /sppsReagents/);
   const examples = [
     "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",
     "H-Arg-Gly-Asp-Phe-Lys-NH2",
@@ -120,7 +124,7 @@ function bootApp() {
     "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
     "DOTA-Lys-Gly-OH",
   ];
-  examples.forEach((example) => assert.match(fs.readFileSync("app.js", "utf8"), new RegExp(escapeRegExp(example))));
+  examples.forEach((example) => assert.match(data, new RegExp(escapeRegExp(example))));
   assert.match(css, /prefers-color-scheme:\s*dark/);
   assert.match(css, /\[data-theme="dark"\]/);
   assert.match(css, /\[data-theme="light"\]/);
@@ -268,6 +272,10 @@ function bootApp() {
   assert.match(copied, /N-terminal: 1/);
   assert.match(copied, /side-chain protecting: 3/);
   assert.match(copied, /Protected average MW/);
+  assert.match(copied, /SPPS reagent estimate:/);
+  assert.match(copied, /Target scale: 0\.10 mmol/);
+  assert.match(copied, /Resin required: 0\.29 g/);
+  assert.match(copied, /Fmoc-AA-OH pool/);
 
   console.log("All acceptance checks passed.");
 })();

@@ -211,7 +211,8 @@ dt {
 
 .input-zone label,
 .example-control,
-.salt-controls label {
+.salt-controls label,
+.spps-controls label {
   display: grid;
   gap: 7px;
   color: var(--muted);
@@ -268,6 +269,12 @@ input:focus,
   margin-top: 12px;
 }
 
+.spps-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -297,7 +304,8 @@ input:focus,
 }
 
 .risk-panel,
-.report-panel {
+.report-panel,
+.spps-panel {
   grid-column: 1 / -1;
 }
 
@@ -429,6 +437,53 @@ dd {
   background: var(--warning-soft);
 }
 
+.spps-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.spps-summary article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--panel-strong);
+}
+
+.spps-summary span,
+.spps-table dt {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.spps-summary strong,
+.spps-table dd {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.spps-table {
+  display: grid;
+  gap: 8px;
+}
+
+.spps-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.1fr) repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--field);
+}
+
+.spps-row dl {
+  display: contents;
+}
+
 .report-panel pre {
   max-height: 260px;
   overflow: auto;
@@ -516,6 +571,9 @@ dd {
 
   .metrics,
   .salt-controls,
+  .spps-controls,
+  .spps-summary,
+  .spps-row,
   .sequence-list li,
   .action-bar {
     grid-template-columns: 1fr;
