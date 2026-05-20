@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Protected Peptide Calculator</string>
+    <string name="title_activity_main">Protected Peptide Calculator</string>
+    <string name="package_name">com.protectedpeptide.calculator</string>
+    <string name="custom_url_scheme">com.protectedpeptide.calculator</string>
+</resources>

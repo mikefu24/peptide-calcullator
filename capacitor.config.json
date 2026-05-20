@@ -1,0 +1,8 @@
+{
+  "appId": "com.protectedpeptide.calculator",
+  "appName": "Protected Peptide Calculator",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

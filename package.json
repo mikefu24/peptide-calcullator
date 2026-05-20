@@ -4,12 +4,17 @@
   "private": true,
   "description": "Local-first protected peptide molecular weight calculator.",
   "type": "commonjs",
+  "main": "electron/main.js",
   "scripts": {
     "lint": "node scripts/lint.js",
     "test": "node acceptance.test.js",
     "functional": "node scripts/functional-check.js",
     "focused-qa": "node scripts/focused-qa.js",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "electron:start": "npm run build && electron .",
+    "electron:dist": "npm run build && electron-builder --mac dmg",
+    "cap:sync": "npm run build && cap sync android",
+    "android:apk": "npm run cap:sync && cd android && GRADLE_USER_HOME=../.gradle-cache JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ./gradlew assembleDebug"
   },
   "keywords": [
     "peptide",
@@ -17,5 +22,32 @@
     "molecular-weight",
     "protected-peptide"
   ],
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "build": {
+    "appId": "com.protectedpeptide.calculator",
+    "productName": "Protected Peptide Calculator",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dmg",
+      "identity": null,
+      "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "directories": {
+      "output": "release"
+    }
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "electron": "^42.2.0",
+    "electron-builder": "^26.8.1"
+  }
 }
