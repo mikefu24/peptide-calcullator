@@ -40,7 +40,7 @@
   - 输入目标规模和树脂 loading，自动计算树脂用量
   - 支持 amino acid、coupling reagent、base 等量倍数
   - 支持 single coupling、double coupling、difficult sequence strategy
-  - 估算 Fmoc-AA-OH、HATU/HBTU 或 DIC/Oxyma、DIPEA、Piperidine/DMF、DMF、TFA cocktail 用量
+  - 估算 Fmoc-AA-OH、DIC/HOBt、DIC/Oxyma、PyBOP/DIEA、Piperidine/DMF、DMF、TFA cocktail 用量
   - 输出理论成本和废液体积估算
 - 支持 `Copy Result` 和 `Load Example`
 

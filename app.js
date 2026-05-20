@@ -476,9 +476,9 @@ function calculateSpps(parsed) {
   const aaMmol = scaleMmol * aaEq * couplingSteps;
   const couplingMmol = scaleMmol * couplingEq * couplingSteps;
   const baseMmol = scaleMmol * baseEq * couplingSteps;
-  const reagent = els.couplingReagent?.value || "HATU";
+  const reagent = els.couplingReagent?.value || "DIC/HOBt";
   const aminoAcidG = (aaMmol * sppsReagents["Fmoc-AA-OH"].mw) / 1000;
-  const baseML = (baseMmol * sppsReagents.DIPEA.mw) / (1000 * sppsReagents.DIPEA.density);
+  const baseML = (baseMmol * sppsReagents.DIEA.mw) / (1000 * sppsReagents.DIEA.density);
   const piperidineML = Math.max(residueCount, 1) * scaleMmol * 12 * multiplier;
   const dmfML = Math.max(residueCount, 1) * scaleMmol * 75 * multiplier + resinG * 12;
   const tfaML = Math.max(resinG * 10, scaleMmol * 8);
@@ -499,13 +499,29 @@ function calculateSpps(parsed) {
     },
   ];
 
-  if (reagent === "DIC/Oxyma") {
+  if (reagent === "DIC/HOBt") {
+    const dicML = (couplingMmol * sppsReagents.DIC.mw) / (1000 * sppsReagents.DIC.density);
+    const hobtG = (couplingMmol * sppsReagents.HOBt.mw) / 1000;
+    rows.push(
+      { name: "DIC", basis: `${fixed2(couplingEq)} eq`, amount: dicML, unit: "mL", cost: dicML * sppsReagents.DIC.defaultPrice },
+      { name: "HOBt", basis: `${fixed2(couplingEq)} eq`, amount: hobtG, unit: "g", cost: hobtG * sppsReagents.HOBt.defaultPrice },
+    );
+  } else if (reagent === "DIC/Oxyma") {
     const dicML = (couplingMmol * sppsReagents.DIC.mw) / (1000 * sppsReagents.DIC.density);
     const oxymaG = (couplingMmol * sppsReagents.Oxyma.mw) / 1000;
     rows.push(
       { name: "DIC", basis: `${fixed2(couplingEq)} eq`, amount: dicML, unit: "mL", cost: dicML * sppsReagents.DIC.defaultPrice },
       { name: "Oxyma Pure", basis: `${fixed2(couplingEq)} eq`, amount: oxymaG, unit: "g", cost: oxymaG * sppsReagents.Oxyma.defaultPrice },
     );
+  } else if (reagent === "PyBOP/DIEA") {
+    const pybopG = (couplingMmol * sppsReagents.PyBOP.mw) / 1000;
+    rows.push({
+      name: "PyBOP",
+      basis: `${fixed2(couplingEq)} eq`,
+      amount: pybopG,
+      unit: "g",
+      cost: pybopG * sppsReagents.PyBOP.defaultPrice,
+    });
   } else {
     rows.push({
       name: reagent,
@@ -517,14 +533,14 @@ function calculateSpps(parsed) {
   }
 
   rows.push(
-    { name: "DIPEA", basis: `${fixed2(baseEq)} eq`, amount: baseML, unit: "mL", cost: baseML * sppsReagents.DIPEA.defaultPrice },
+    { name: "DIEA", basis: `${fixed2(baseEq)} eq`, amount: baseML, unit: "mL", cost: baseML * sppsReagents.DIEA.defaultPrice },
     { name: "20% Piperidine/DMF", basis: "Fmoc deprotection", amount: piperidineML, unit: "mL", cost: piperidineML * sppsReagents.Piperidine.defaultPrice },
     { name: "DMF", basis: "Coupling + wash solvent", amount: dmfML, unit: "mL", cost: dmfML * sppsReagents.DMF.defaultPrice },
     { name: "TFA cocktail", basis: "Cleavage cocktail", amount: tfaML, unit: "mL", cost: tfaML * sppsReagents["TFA cocktail"].defaultPrice },
   );
 
   const totalCost = rows.reduce((sum, row) => sum + row.cost, 0);
-  const wasteML = dmfML + piperidineML + tfaML + baseML + rows.filter((row) => row.unit === "mL").reduce((sum, row) => ["DIPEA", "20% Piperidine/DMF", "DMF", "TFA cocktail"].includes(row.name) ? sum : sum + row.amount, 0);
+  const wasteML = dmfML + piperidineML + tfaML + baseML + rows.filter((row) => row.unit === "mL").reduce((sum, row) => ["DIEA", "20% Piperidine/DMF", "DMF", "TFA cocktail"].includes(row.name) ? sum : sum + row.amount, 0);
   return { scaleMmol, loading, resinG, residueCount, couplingSteps, strategy, reagent, rows, totalCost, wasteML };
 }
 

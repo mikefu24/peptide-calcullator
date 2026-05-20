@@ -108,6 +108,14 @@ function bootApp() {
   assert.match(data, /GnRH analog/);
   assert.match(data, /somatostatin analog/);
   assert.match(data, /sppsReagents/);
+  assert.match(data, /HOBt/);
+  assert.match(data, /PyBOP/);
+  assert.match(data, /DIEA/);
+  assert.match(html, /DIC\/HOBt/);
+  assert.match(html, /DIC\/Oxyma/);
+  assert.match(html, /PyBOP\/DIEA/);
+  assert.doesNotMatch(html, /<option value="HATU">/);
+  assert.doesNotMatch(html, /<option value="HBTU">/);
   const examples = [
     "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",
     "H-Arg-Gly-Asp-Phe-Lys-NH2",
@@ -276,6 +284,9 @@ function bootApp() {
   assert.match(copied, /Target scale: 0\.10 mmol/);
   assert.match(copied, /Resin required: 0\.29 g/);
   assert.match(copied, /Fmoc-AA-OH pool/);
+  assert.match(copied, /DIC/);
+  assert.match(copied, /HOBt/);
+  assert.match(copied, /DIEA/);
 
   console.log("All acceptance checks passed.");
 })();
