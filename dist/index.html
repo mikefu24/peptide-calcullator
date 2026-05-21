@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Protected Peptide Calculator</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=kaiser-lab" />
   </head>
   <body>
     <main class="app-shell">
@@ -23,7 +23,22 @@
         </label>
       </header>
 
-      <section class="calculator-layout">
+      <nav class="tool-switcher" aria-label="功能模块切换">
+        <button class="tool-tab is-active" id="toolCalculator" type="button" data-tool="calculator">
+          <span>MW Calculator</span>
+          <strong>分子量计算与副反应风险评估</strong>
+        </button>
+        <button class="tool-tab" id="toolKaiser" type="button" data-tool="kaiser">
+          <span>Kaiser Photo</span>
+          <strong>茚三酮 / Chloranil 拍照判断</strong>
+        </button>
+        <button class="tool-tab" id="toolDelta" type="button" data-tool="delta">
+          <span>Δmass Lookup</span>
+          <strong>质量差副产物查询</strong>
+        </button>
+      </nav>
+
+      <section class="calculator-layout tool-view is-active" data-tool-panel="calculator">
         <section class="input-column" aria-label="序列输入">
           <article class="panel input-zone primary-panel">
             <div class="panel-head">
@@ -141,21 +156,34 @@
         </aside>
       </section>
 
-      <section class="kaiser-module" aria-label="茚三酮拍照显色判断">
+      <section class="kaiser-module tool-view" data-tool-panel="kaiser" aria-label="茚三酮拍照显色判断">
         <article class="panel">
           <div class="panel-head">
             <h2>Kaiser Photo Assistant</h2>
-            <span id="kaiserMode">Manual</span>
+            <span id="kaiserCameraState">Camera idle</span>
           </div>
           <div class="kaiser-tool">
-            <label>
-              Kaiser test photo
-              <input id="kaiserPhotoInput" type="file" accept="image/*" />
-            </label>
-            <canvas id="kaiserCanvas" width="720" height="420"></canvas>
+            <div class="segmented-control" role="tablist" aria-label="Kaiser detection mode">
+              <button class="segment is-active" id="kaiserStandardMode" type="button">Standard</button>
+              <button class="segment" id="kaiserProMode" type="button">Proline</button>
+              <button class="segment" id="kaiserChloranilMode" type="button">Chloranil</button>
+            </div>
+            <div class="kaiser-camera">
+              <video id="kaiserVideo" playsinline muted></video>
+              <canvas id="kaiserCanvas" width="720" height="420"></canvas>
+              <div class="kaiser-roi" aria-hidden="true"></div>
+              <label class="kaiser-torch">
+                <input id="kaiserTorch" type="checkbox" />
+                Flash
+              </label>
+            </div>
             <div class="kaiser-actions">
-              <button class="button" id="setKaiserSample" type="button">Set Sample Point</button>
-              <button class="button" id="setKaiserBlank" type="button">Set Blank Point</button>
+              <button class="button primary" id="startKaiserCamera" type="button">Start Camera</button>
+              <button class="button" id="setKaiserBlank" type="button">Set Blank</button>
+              <label class="button">
+                Load Photo
+                <input id="kaiserPhotoInput" type="file" accept="image/*" capture="environment" />
+              </label>
             </div>
           </div>
         </article>
@@ -163,17 +191,27 @@
         <article class="panel">
           <div class="panel-head">
             <h2>Kaiser Color Result</h2>
-            <span>RGB / blue score</span>
+            <span>CIELAB / Delta E</span>
           </div>
           <div class="kaiser-readout">
-            <article><span>Sample RGB</span><strong id="kaiserSampleColor">--</strong></article>
-            <article><span>Blank RGB</span><strong id="kaiserBlankColor">--</strong></article>
-            <article><span>Blue score</span><strong id="kaiserScore">--</strong></article>
+            <article class="kaiser-status-card">
+              <span>Status</span>
+              <strong id="kaiserStatus">Negative</strong>
+            </article>
+            <article>
+              <span>Positive intensity</span>
+              <div class="progress-track"><div id="kaiserProgress" class="progress-fill"></div></div>
+              <strong id="kaiserScore">0%</strong>
+            </article>
+            <article><span>ROI Lab</span><strong id="kaiserCurrentLab">--</strong></article>
+            <article><span>Blank Lab</span><strong id="kaiserBlankLab">--</strong></article>
+            <article><span>Delta E</span><strong id="kaiserDeltaE">--</strong></article>
+            <article class="kaiser-guidance-card"><span>Lab action</span><strong id="kaiserGuidance">Normal: protected amine appears blocked. Proceed if the resin color stays unchanged.</strong></article>
           </div>
         </article>
       </section>
 
-      <section class="delta-module" aria-label="分子量差值副产物查询">
+      <section class="delta-module tool-view" data-tool-panel="delta" aria-label="分子量差值副产物查询">
         <article class="panel">
           <div class="panel-head">
             <h2>Mass Delta Lookup</h2>
@@ -200,7 +238,7 @@
         </article>
       </section>
 
-      <footer class="action-bar" aria-label="操作按钮">
+      <footer class="action-bar tool-view is-active" data-tool-panel="calculator" aria-label="操作按钮">
         <button class="button primary" id="calculateButton" type="button">Calculate</button>
         <button class="button" id="clearButton" type="button">Clear</button>
         <button class="button" id="copyReport" type="button">Copy Result</button>
@@ -208,8 +246,28 @@
       </footer>
     </main>
 
-    <script src="./chemistry-data.js"></script>
-    <script src="./side-reactions-data.js"></script>
-    <script src="./app.js"></script>
+    <script>
+      (() => {
+        const activateTool = (tool) => {
+          document.querySelectorAll("[data-tool]").forEach((tab) => {
+            const active = tab.dataset.tool === tool;
+            tab.classList.toggle("is-active", active);
+            if (tab.setAttribute) tab.setAttribute("aria-pressed", String(active));
+          });
+          document.querySelectorAll("[data-tool-panel]").forEach((panel) => {
+            panel.classList.toggle("is-active", panel.dataset.toolPanel === tool);
+          });
+        };
+
+        window.activatePeptideTool = activateTool;
+        document.querySelectorAll("[data-tool]").forEach((tab) => {
+          tab.addEventListener("click", () => activateTool(tab.dataset.tool || "calculator"));
+        });
+        activateTool("calculator");
+      })();
+    </script>
+    <script src="./chemistry-data.js?v=kaiser-lab"></script>
+    <script src="./side-reactions-data.js?v=kaiser-lab"></script>
+    <script src="./app.js?v=kaiser-lab"></script>
   </body>
 </html>

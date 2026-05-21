@@ -17,11 +17,16 @@ const { sideReactionMassDeltas = [], source: sideReactionSource = "" } = globalT
 
 const themeStorageKey = "protected-peptide-theme";
 let currentResult = null;
-let kaiserPickMode = "sample";
-let kaiserSampleColor = null;
-let kaiserBlankColor = null;
+let kaiserDetectionMode = "Standard";
+let kaiserStream = null;
+let kaiserFrameHandle = null;
+let kaiserBlankLab = { L: 92, a: -2, b: 18 };
+let kaiserCurrentLab = null;
+let kaiserCurrentRgb = null;
 
 const els = {
+  toolTabs: Array.from(document.querySelectorAll("[data-tool]")),
+  toolPanels: Array.from(document.querySelectorAll("[data-tool-panel]")),
   input: document.querySelector("#sequenceInput"),
   protectedAvg: document.querySelector("#protectedAvg"),
   protectedMono: document.querySelector("#protectedMono"),
@@ -58,14 +63,38 @@ const els = {
   deltaMatchCount: document.querySelector("#deltaMatchCount"),
   sideReactionMatches: document.querySelector("#sideReactionMatches"),
   kaiserPhotoInput: document.querySelector("#kaiserPhotoInput"),
+  kaiserVideo: document.querySelector("#kaiserVideo"),
   kaiserCanvas: document.querySelector("#kaiserCanvas"),
-  kaiserMode: document.querySelector("#kaiserMode"),
-  setKaiserSample: document.querySelector("#setKaiserSample"),
+  kaiserCameraState: document.querySelector("#kaiserCameraState"),
+  kaiserStandardMode: document.querySelector("#kaiserStandardMode"),
+  kaiserProMode: document.querySelector("#kaiserProMode"),
+  kaiserChloranilMode: document.querySelector("#kaiserChloranilMode"),
+  startKaiserCamera: document.querySelector("#startKaiserCamera"),
   setKaiserBlank: document.querySelector("#setKaiserBlank"),
-  kaiserSampleColor: document.querySelector("#kaiserSampleColor"),
-  kaiserBlankColor: document.querySelector("#kaiserBlankColor"),
+  kaiserTorch: document.querySelector("#kaiserTorch"),
+  kaiserStatus: document.querySelector("#kaiserStatus"),
+  kaiserProgress: document.querySelector("#kaiserProgress"),
+  kaiserCurrentLab: document.querySelector("#kaiserCurrentLab"),
+  kaiserBlankLab: document.querySelector("#kaiserBlankLab"),
+  kaiserDeltaE: document.querySelector("#kaiserDeltaE"),
+  kaiserGuidance: document.querySelector("#kaiserGuidance"),
   kaiserScore: document.querySelector("#kaiserScore"),
 };
+
+function setActiveTool(tool) {
+  if (window.activatePeptideTool && window.activatePeptideTool !== setActiveTool) {
+    window.activatePeptideTool(tool);
+    return;
+  }
+  els.toolTabs.forEach((tab) => {
+    const isActive = tab.dataset.tool === tool;
+    tab.classList.toggle("is-active", isActive);
+    if (tab.setAttribute) tab.setAttribute("aria-pressed", String(isActive));
+  });
+  els.toolPanels.forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.toolPanel === tool);
+  });
+}
 
 function cloneFormula(formula = {}) {
   return { ...formula };
@@ -551,32 +580,113 @@ function renderDeltaLookup() {
   return { query, tolerance, matches };
 }
 
-function blueIndex(color) {
-  if (!color) return null;
-  return color.b - (color.r + color.g) / 2;
+function rgbChannelToLinear(value) {
+  const normalized = value / 255;
+  return normalized > 0.04045 ? ((normalized + 0.055) / 1.055) ** 2.4 : normalized / 12.92;
 }
 
-function colorToText(color) {
-  return color ? `${color.r}, ${color.g}, ${color.b}` : "--";
+function xyzPivot(value) {
+  return value > 0.008856 ? Math.cbrt(value) : 7.787 * value + 16 / 116;
+}
+
+function rgbToLab({ r, g, b }) {
+  const red = rgbChannelToLinear(r);
+  const green = rgbChannelToLinear(g);
+  const blue = rgbChannelToLinear(b);
+  const x = (red * 0.4124 + green * 0.3576 + blue * 0.1805) / 0.95047;
+  const y = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 1;
+  const z = (red * 0.0193 + green * 0.1192 + blue * 0.9505) / 1.08883;
+  const fx = xyzPivot(x);
+  const fy = xyzPivot(y);
+  const fz = xyzPivot(z);
+  return {
+    L: 116 * fy - 16,
+    a: 500 * (fx - fy),
+    b: 200 * (fy - fz),
+  };
+}
+
+function deltaE(current, blank) {
+  if (!current || !blank) return null;
+  return Math.sqrt((current.L - blank.L) ** 2 + (current.a - blank.a) ** 2 + (current.b - blank.b) ** 2);
+}
+
+function analyzeColor(mode, current, blank, rgb = null) {
+  const distance = deltaE(current, blank) || 0;
+  if (mode === "Standard") {
+    if (current.L < 35 && current.b < 0) {
+      return { result: "Positive", score: Math.min(100, distance * 1.5) };
+    }
+    if (current.L >= 35 && current.L < 70 && current.b < 10) {
+      return { result: "Weak Positive", score: Math.min(100, 40 + (70 - current.L)) };
+    }
+    return { result: "Negative", score: Math.max(0, 10 - distance) };
+  }
+  if (mode === "Chloranil") {
+    const rgbLooksDarkGreen = rgb ? rgb.g > rgb.r && current.L < 50 : false;
+    const isBlueOrDarkGreen = current.b < -5 || rgbLooksDarkGreen;
+    if (current.L < 40 && current.b < 0) {
+      return { result: "Positive", score: Math.min(100, distance * 1.8) };
+    }
+    if (current.L >= 40 && current.L < 65 && (current.b < 5 || current.a < 0 || isBlueOrDarkGreen)) {
+      return { result: "Weak Positive", score: Math.min(100, 35 + (65 - current.L)) };
+    }
+    return { result: "Negative", score: Math.max(0, 10 - distance) };
+  }
+  const isReddishOrange = current.a > 15 && current.b > 15;
+  if (isReddishOrange && current.L < 50) {
+    return { result: "Positive", score: Math.min(100, distance * 2) };
+  }
+  if (isReddishOrange && current.L >= 50) {
+    return { result: "Weak Positive", score: 50 };
+  }
+  return { result: "Negative", score: 0 };
+}
+
+function labToText(lab) {
+  return lab ? `L ${fixed2(lab.L)} / a ${fixed2(lab.a)} / b ${fixed2(lab.b)}` : "--";
+}
+
+function toggleActive(element, active) {
+  if (element?.classList?.toggle) element.classList.toggle("is-active", active);
+}
+
+function getKaiserGuidance(mode, result) {
+  if (mode === "Chloranil") {
+    if (result === "Positive") {
+      return "Warning: secondary amine (Pro) is strongly exposed. Deprotection is complete, or the next coupling may have failed.";
+    }
+    if (result === "Weak Positive") {
+      return "Notice: a small amount of secondary amine may remain reactive. Extend coupling time or use a stronger coupling reagent such as HATU.";
+    }
+    return "Normal: secondary amine appears fully capped. Proceed to the next reaction step.";
+  }
+  if (mode === "Pro") {
+    if (result === "Positive") return "Warning: Proline-like secondary amine response is strong. Confirm with chloranil test before deciding pass/fail.";
+    if (result === "Weak Positive") return "Notice: secondary amine signal is borderline. Use chloranil test or LC-MS/process check for confirmation.";
+    return "Normal: Proline mode shows no obvious red-orange response.";
+  }
+  if (result === "Positive") return "Warning: free primary amine signal is strong. Coupling may be incomplete.";
+  if (result === "Weak Positive") return "Notice: weak primary amine signal. Consider recoupling or extending coupling time.";
+  return "Normal: primary amine signal is negative.";
 }
 
 function renderKaiserReadout() {
-  const sampleIndex = blueIndex(kaiserSampleColor);
-  const blankIndex = blueIndex(kaiserBlankColor);
-  const score = sampleIndex === null || blankIndex === null ? null : sampleIndex - blankIndex;
-  if (els.kaiserMode) els.kaiserMode.textContent = kaiserPickMode === "sample" ? "Pick sample" : "Pick blank";
-  if (els.kaiserSampleColor) els.kaiserSampleColor.textContent = colorToText(kaiserSampleColor);
-  if (els.kaiserBlankColor) els.kaiserBlankColor.textContent = colorToText(kaiserBlankColor);
-  if (!els.kaiserScore) return;
-  if (score === null) {
-    els.kaiserScore.textContent = "--";
-  } else if (score >= 28) {
-    els.kaiserScore.textContent = `${fixed2(score)} Positive`;
-  } else if (score >= 12) {
-    els.kaiserScore.textContent = `${fixed2(score)} Weak`;
-  } else {
-    els.kaiserScore.textContent = `${fixed2(score)} Negative`;
+  const distance = deltaE(kaiserCurrentLab, kaiserBlankLab);
+  const detection = kaiserCurrentLab ? analyzeColor(kaiserDetectionMode, kaiserCurrentLab, kaiserBlankLab, kaiserCurrentRgb) : { result: "Negative", score: 0 };
+  toggleActive(els.kaiserStandardMode, kaiserDetectionMode === "Standard");
+  toggleActive(els.kaiserProMode, kaiserDetectionMode === "Pro");
+  toggleActive(els.kaiserChloranilMode, kaiserDetectionMode === "Chloranil");
+  if (els.kaiserStatus) {
+    els.kaiserStatus.textContent = detection.result;
+    els.kaiserStatus.closest?.(".kaiser-status-card")?.setAttribute("data-result", detection.result);
   }
+  if (els.kaiserProgress) els.kaiserProgress.style.width = `${Math.round(detection.score)}%`;
+  if (els.kaiserScore) els.kaiserScore.textContent = `${Math.round(detection.score)}%`;
+  if (els.kaiserCurrentLab) els.kaiserCurrentLab.textContent = labToText(kaiserCurrentLab);
+  if (els.kaiserBlankLab) els.kaiserBlankLab.textContent = labToText(kaiserBlankLab);
+  if (els.kaiserDeltaE) els.kaiserDeltaE.textContent = distance === null ? "--" : fixed2(distance);
+  if (els.kaiserGuidance) els.kaiserGuidance.textContent = getKaiserGuidance(kaiserDetectionMode, detection.result);
 }
 
 function drawKaiserImage(image) {
@@ -596,23 +706,88 @@ function drawKaiserImage(image) {
   canvas.dataset.imageY = String(y);
   canvas.dataset.imageWidth = String(width);
   canvas.dataset.imageHeight = String(height);
+  updateKaiserMetricsFromCanvas();
 }
 
-function sampleKaiserPoint(event) {
+function getKaiserRoi(canvas) {
+  const size = Math.round(Math.min(canvas.width, canvas.height) * 0.34);
+  return {
+    x: Math.round((canvas.width - size) / 2),
+    y: Math.round((canvas.height - size) / 2),
+    size,
+  };
+}
+
+function sampleKaiserRoi() {
   const canvas = els.kaiserCanvas;
   const context = canvas?.getContext?.("2d");
-  if (!canvas || !context) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = Math.round((event.clientX - rect.left) * (canvas.width / rect.width));
-  const y = Math.round((event.clientY - rect.top) * (canvas.height / rect.height));
-  const pixel = context.getImageData(x, y, 1, 1).data;
-  const color = { r: pixel[0], g: pixel[1], b: pixel[2] };
-  if (kaiserPickMode === "blank") {
-    kaiserBlankColor = color;
-  } else {
-    kaiserSampleColor = color;
+  if (!canvas || !context) return null;
+  const roi = getKaiserRoi(canvas);
+  const data = context.getImageData(roi.x, roi.y, roi.size, roi.size).data;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let index = 0; index < data.length; index += 16) {
+    r += data[index];
+    g += data[index + 1];
+    b += data[index + 2];
+    count += 1;
   }
+  if (!count) return null;
+  return { r: r / count, g: g / count, b: b / count };
+}
+
+function updateKaiserMetricsFromCanvas() {
+  const rgb = sampleKaiserRoi();
+  if (!rgb) return;
+  kaiserCurrentRgb = rgb;
+  kaiserCurrentLab = rgbToLab(rgb);
   renderKaiserReadout();
+}
+
+function drawKaiserVideoFrame() {
+  const video = els.kaiserVideo;
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!video || !canvas || !context) return;
+  if (video.readyState >= 2) {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    updateKaiserMetricsFromCanvas();
+  }
+  kaiserFrameHandle = window.requestAnimationFrame(drawKaiserVideoFrame);
+}
+
+async function startKaiserCamera() {
+  if (!navigator.mediaDevices?.getUserMedia || !els.kaiserVideo) {
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Use photo upload";
+    return;
+  }
+  try {
+    if (kaiserStream) kaiserStream.getTracks().forEach((track) => track.stop());
+    kaiserStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },
+      audio: false,
+    });
+    els.kaiserVideo.srcObject = kaiserStream;
+    await els.kaiserVideo.play();
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Live ROI sampling";
+    if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
+    drawKaiserVideoFrame();
+  } catch (error) {
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Camera unavailable";
+  }
+}
+
+async function setKaiserTorch(enabled) {
+  const track = kaiserStream?.getVideoTracks?.()[0];
+  if (!track?.applyConstraints) return;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: enabled }] });
+  } catch (error) {
+    if (els.kaiserTorch) els.kaiserTorch.checked = false;
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Flash not supported";
+  }
 }
 
 function buildCsv() {
@@ -815,22 +990,43 @@ els.saltEquiv.addEventListener("input", render);
 els.reportProfile?.addEventListener("change", render);
 els.deltaMassInput?.addEventListener("input", render);
 els.deltaTolerance?.addEventListener("input", render);
-els.setKaiserSample?.addEventListener("click", () => {
-  kaiserPickMode = "sample";
+els.toolTabs.forEach((tab) => {
+  tab.addEventListener("click", () => setActiveTool(tab.dataset.tool || "calculator"));
+});
+els.kaiserStandardMode?.addEventListener("click", () => {
+  kaiserDetectionMode = "Standard";
+  renderKaiserReadout();
+});
+els.kaiserProMode?.addEventListener("click", () => {
+  kaiserDetectionMode = "Pro";
+  renderKaiserReadout();
+});
+els.kaiserChloranilMode?.addEventListener("click", () => {
+  kaiserDetectionMode = "Chloranil";
   renderKaiserReadout();
 });
 els.setKaiserBlank?.addEventListener("click", () => {
-  kaiserPickMode = "blank";
-  renderKaiserReadout();
+  if (kaiserCurrentLab) {
+    kaiserBlankLab = { ...kaiserCurrentLab };
+    renderKaiserReadout();
+  }
 });
-els.kaiserCanvas?.addEventListener("click", sampleKaiserPoint);
+els.startKaiserCamera?.addEventListener("click", startKaiserCamera);
+els.kaiserTorch?.addEventListener("change", () => {
+  setKaiserTorch(els.kaiserTorch.checked);
+});
 els.kaiserPhotoInput?.addEventListener("change", () => {
   const file = els.kaiserPhotoInput.files?.[0];
   if (!file || typeof FileReader === "undefined" || typeof Image === "undefined") return;
+  if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
+  if (kaiserStream) kaiserStream.getTracks().forEach((track) => track.stop());
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const image = new Image();
-    image.addEventListener("load", () => drawKaiserImage(image));
+    image.addEventListener("load", () => {
+      drawKaiserImage(image);
+      if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Photo ROI sampling";
+    });
     image.src = reader.result;
   });
   reader.readAsDataURL(file);
@@ -883,5 +1079,6 @@ els.copyReport.addEventListener("click", async () => {
 });
 
 applyTheme(localStorage.getItem(themeStorageKey) || "system");
+setActiveTool("calculator");
 renderKaiserReadout();
 render();

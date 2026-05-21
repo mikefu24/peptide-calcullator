@@ -78,6 +78,7 @@ function bootApp() {
   vm.runInNewContext(fs.readFileSync("app.js", "utf8"), context);
 
   return {
+    context,
     elements,
     setSequence(sequence) {
       elements.get("#sequenceInput").value = sequence;
@@ -105,6 +106,9 @@ function bootApp() {
   assert.match(html, /chemistry-data\.js/);
   assert.match(html, /side-reactions-data\.js/);
   assert.match(html, /Kaiser Photo Assistant/);
+  assert.match(html, /id="kaiserChloranilMode"/);
+  assert.match(html, /Chloranil/);
+  assert.match(html, /id="kaiserGuidance"/);
   assert.match(html, /Mass Delta Lookup/);
   assert.match(html, /id="kaiserPhotoInput"/);
   assert.match(html, /id="deltaMassInput"/);
@@ -142,6 +146,10 @@ function bootApp() {
   assert.match(css, /@media \(max-width:\s*720px\)/);
 
   const app = bootApp();
+
+  assert.equal(app.context.analyzeColor("Chloranil", { L: 28, a: -4, b: -12 }, { L: 90, a: -2, b: 18 }, { r: 20, g: 46, b: 90 }).result, "Positive");
+  assert.equal(app.context.analyzeColor("Chloranil", { L: 52, a: -8, b: 2 }, { L: 90, a: -2, b: 18 }, { r: 80, g: 120, b: 90 }).result, "Weak Positive");
+  assert.equal(app.context.analyzeColor("Chloranil", { L: 88, a: -3, b: 22 }, { L: 90, a: -2, b: 18 }, { r: 230, g: 225, b: 160 }).result, "Negative");
 
   examples.forEach((example) => {
     app.setSequence(example);

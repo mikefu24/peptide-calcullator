@@ -129,6 +129,51 @@ input {
   background: var(--surface);
 }
 
+.tool-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tool-tab {
+  min-height: 78px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.tool-tab:hover {
+  border-color: var(--accent);
+}
+
+.tool-tab.is-active {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+  background: linear-gradient(180deg, var(--accent-soft), var(--panel));
+  box-shadow: var(--shadow);
+}
+
+.tool-tab span,
+.tool-tab strong {
+  display: block;
+}
+
+.tool-tab span {
+  margin-bottom: 5px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tool-tab strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
 .theme-control {
   display: grid;
   gap: 6px;
@@ -177,6 +222,20 @@ h2 {
 .kaiser-module,
 .delta-module {
   align-items: start;
+}
+
+.calculator-layout.tool-view:not(.is-active),
+.kaiser-module.tool-view:not(.is-active),
+.delta-module.tool-view:not(.is-active),
+.action-bar.tool-view:not(.is-active) {
+  display: none;
+}
+
+.calculator-layout.tool-view.is-active,
+.kaiser-module.tool-view.is-active,
+.delta-module.tool-view.is-active,
+.action-bar.tool-view.is-active {
+  display: grid;
 }
 
 .input-column,
@@ -291,12 +350,81 @@ input:focus,
   gap: 12px;
 }
 
-#kaiserCanvas {
-  width: 100%;
-  aspect-ratio: 12 / 7;
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  padding: 4px;
   background: var(--panel-strong);
+}
+
+.segment {
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.segment.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.kaiser-camera {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0b1114;
+  aspect-ratio: 12 / 7;
+}
+
+.kaiser-camera video,
+#kaiserCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#kaiserCanvas {
+  pointer-events: none;
+}
+
+.kaiser-roi {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(42%, 220px);
+  aspect-ratio: 1 / 1;
+  border: 2px solid color-mix(in srgb, var(--accent) 75%, white);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 20%), inset 0 0 0 1px rgb(255 255 255 / 45%);
+}
+
+.kaiser-torch {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgb(0 0 0 / 48%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 850;
 }
 
 .kaiser-actions,
@@ -333,6 +461,47 @@ input:focus,
   margin-top: 4px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 18px;
+}
+
+.kaiser-status-card strong {
+  font-family: inherit;
+  font-size: 28px;
+}
+
+.kaiser-status-card[data-result="Positive"] {
+  border-color: color-mix(in srgb, #b42318 55%, var(--line));
+  background: color-mix(in srgb, #b42318 12%, var(--panel-strong));
+}
+
+.kaiser-status-card[data-result="Weak Positive"] {
+  border-color: color-mix(in srgb, #b7791f 55%, var(--line));
+  background: color-mix(in srgb, #b7791f 12%, var(--panel-strong));
+}
+
+.kaiser-guidance-card strong {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.progress-track {
+  overflow: hidden;
+  height: 10px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 20%, transparent);
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2f855a, #b7791f, #b42318);
+  transition: width 140ms ease;
+}
+
+.button input[type="file"] {
+  display: none;
 }
 
 .metrics {
@@ -619,6 +788,10 @@ dd {
     align-items: stretch;
     flex-direction: column;
     padding: 4px 0 12px;
+  }
+
+  .tool-switcher {
+    grid-template-columns: 1fr;
   }
 
   textarea {
