@@ -70,29 +70,6 @@
             <ol id="parsedSequence" class="sequence-list"></ol>
           </article>
 
-          <article class="panel">
-            <div class="panel-head">
-              <h2>Kaiser Photo Assistant</h2>
-              <span id="kaiserMode">Manual</span>
-            </div>
-            <div class="kaiser-tool">
-              <label>
-                Kaiser test photo
-                <input id="kaiserPhotoInput" type="file" accept="image/*" />
-              </label>
-              <canvas id="kaiserCanvas" width="720" height="420"></canvas>
-              <div class="kaiser-actions">
-                <button class="button" id="setKaiserSample" type="button">Set Sample Point</button>
-                <button class="button" id="setKaiserBlank" type="button">Set Blank Point</button>
-              </div>
-              <div class="kaiser-readout">
-                <article><span>Sample RGB</span><strong id="kaiserSampleColor">--</strong></article>
-                <article><span>Blank RGB</span><strong id="kaiserBlankColor">--</strong></article>
-                <article><span>Blue score</span><strong id="kaiserScore">--</strong></article>
-              </div>
-            </div>
-          </article>
-
         </section>
 
         <aside class="results-column" aria-label="计算结果">
@@ -162,6 +139,38 @@
             </article>
           </section>
         </aside>
+      </section>
+
+      <section class="kaiser-module" aria-label="茚三酮拍照显色判断">
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Kaiser Photo Assistant</h2>
+            <span id="kaiserMode">Manual</span>
+          </div>
+          <div class="kaiser-tool">
+            <label>
+              Kaiser test photo
+              <input id="kaiserPhotoInput" type="file" accept="image/*" />
+            </label>
+            <canvas id="kaiserCanvas" width="720" height="420"></canvas>
+            <div class="kaiser-actions">
+              <button class="button" id="setKaiserSample" type="button">Set Sample Point</button>
+              <button class="button" id="setKaiserBlank" type="button">Set Blank Point</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Kaiser Color Result</h2>
+            <span>RGB / blue score</span>
+          </div>
+          <div class="kaiser-readout">
+            <article><span>Sample RGB</span><strong id="kaiserSampleColor">--</strong></article>
+            <article><span>Blank RGB</span><strong id="kaiserBlankColor">--</strong></article>
+            <article><span>Blue score</span><strong id="kaiserScore">--</strong></article>
+          </div>
+        </article>
       </section>
 
       <section class="delta-module" aria-label="分子量差值副产物查询">

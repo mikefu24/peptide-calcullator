@@ -163,6 +163,7 @@ h2 {
 }
 
 .calculator-layout,
+.kaiser-module,
 .delta-module {
   display: grid;
   grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.45fr);
@@ -173,6 +174,7 @@ h2 {
   min-height: 0;
 }
 
+.kaiser-module,
 .delta-module {
   align-items: start;
 }
@@ -305,10 +307,11 @@ input:focus,
 }
 
 .kaiser-readout {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .kaiser-readout article {
+  min-height: 92px;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px;
@@ -329,6 +332,7 @@ input:focus,
 .kaiser-readout strong {
   margin-top: 4px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 18px;
 }
 
 .metrics {
@@ -594,6 +598,7 @@ dd {
 
 @media (max-width: 1120px) {
   .calculator-layout,
+  .kaiser-module,
   .delta-module,
   .result-grid {
     grid-template-columns: 1fr;
