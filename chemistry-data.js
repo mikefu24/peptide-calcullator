@@ -158,9 +158,9 @@ const chemistryLibrary = {
   siteTypes: groupSiteTypes,
 };
 const reportProfiles = {
-  rd: "R&D calculation report",
-  quote: "Quotation estimate report",
-  process: "Process input report",
+  rd: "研发计算报告",
+  quote: "报价估算报告",
+  process: "工艺输入报告",
 };
 
 

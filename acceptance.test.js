@@ -96,7 +96,7 @@ function bootApp() {
   const css = fs.readFileSync("styles.css", "utf8");
   const data = fs.readFileSync("chemistry-data.js", "utf8");
   const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
-  ["Calculate", "Clear", "Copy Result", "Load Example"].forEach((label) => {
+  ["计算", "清空", "复制结果", "载入示例"].forEach((label) => {
     assert.match(html, new RegExp(`>${label}<`));
   });
   assert.doesNotMatch(html, />Export CSV</);
@@ -105,11 +105,11 @@ function bootApp() {
   assert.match(html, /id="reportProfile"/);
   assert.match(html, /chemistry-data\.js/);
   assert.match(html, /side-reactions-data\.js/);
-  assert.match(html, /Kaiser Photo Assistant/);
+  assert.match(html, /显色拍照助手/);
   assert.match(html, /id="kaiserChloranilMode"/);
-  assert.match(html, /Chloranil/);
+  assert.match(html, /四氯苯醌/);
   assert.match(html, /id="kaiserGuidance"/);
-  assert.match(html, /Mass Delta Lookup/);
+  assert.match(html, /Δmass 副产物查询/);
   assert.match(html, /id="kaiserPhotoInput"/);
   assert.match(html, /id="deltaMassInput"/);
   assert.match(html, /id="sideReactionMatches"/);
@@ -165,10 +165,10 @@ function bootApp() {
   assert.match(app.elements.get("#protectingGroups").innerHTML, /Pbf/);
   assert.match(app.elements.get("#protectingGroups").innerHTML, /OtBu/);
   assert.match(app.elements.get("#protectingGroups").innerHTML, /Boc/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /main-chain N-terminus/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Arg side chain/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Asp side chain/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys side chain/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /主链 N 端/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Arg 侧链/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Asp 侧链/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys 侧链/);
   assert.notEqual(app.elements.get("#protectedAvg").textContent, "--");
   assert.notEqual(app.elements.get("#deprotectedAvg").textContent, "--");
 
@@ -204,8 +204,8 @@ function bootApp() {
   app.setSequence("Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu side chain/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr side chain/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu 侧链/);
+  assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr 侧链/);
   assert.match(app.elements.get("#parsedSequence").innerHTML, /AEEA/);
 
   app.setSequence("Fmoc-Aib-Gly-Pyr-OH");
@@ -216,7 +216,7 @@ function bootApp() {
   app.setSequence("H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /C18 diacid/);
-  assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+  assert.match(app.elements.get("#riskList").innerHTML, /脂肪化长效肽片段/);
 
   app.setSequence("H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
@@ -234,8 +234,8 @@ function bootApp() {
   assert.equal(app.elements.get("#deprotectedAvg").textContent, "890.1254");
   assert.match(app.elements.get("#protectingGroups").innerHTML, /C20-OtBu/);
   assert.match(app.elements.get("#protectingGroups").innerHTML, /AEEA/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /side-chain chain: C20-OtBu-Glu\(OtBu\)-AEEA-AEEA/);
-  assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+  assert.match(app.elements.get("#parsedSequence").innerHTML, /侧链连接: C20-OtBu-Glu\(OtBu\)-AEEA-AEEA/);
+  assert.match(app.elements.get("#riskList").innerHTML, /脂肪化长效肽片段/);
 
   app.setSequence("Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
@@ -262,7 +262,7 @@ function bootApp() {
   app.setSequence("Fmoc-Arg(ABC)-Gly-OH");
   assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
   assert.match(app.elements.get("#riskList").innerHTML, /Unknown protecting group: ABC/);
-  assert.match(app.elements.get("#riskLevel").textContent, /High/);
+  assert.match(app.elements.get("#riskLevel").textContent, /高/);
 
   app.setSequence("Fmoc-Xxx-Gly-OH");
   assert.match(app.elements.get("#riskList").innerHTML, /Unknown amino acid: Xxx/);
@@ -270,7 +270,7 @@ function bootApp() {
   app.elements.get("#deltaMassInput").value = "-18";
   app.elements.get("#deltaTolerance").value = "0.5";
   app.setSequence("KKK");
-  assert.match(app.elements.get("#deltaMatchCount").textContent, /4 hits/);
+  assert.match(app.elements.get("#deltaMatchCount").textContent, /4 条匹配/);
   assert.match(app.elements.get("#sideReactionMatches").innerHTML, /Aspartimide\/glutarimide formation/);
   assert.match(app.elements.get("#sideReactionMatches").innerHTML, /Pyroglutamate formation from Glu/);
 
@@ -304,14 +304,14 @@ function bootApp() {
 
   app.setSequence("Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH");
   const copied = await app.copy();
-  assert.match(copied, /R&D calculation report/);
-  assert.match(copied, /Chemistry library version: 1\.5\.0/);
-  assert.match(copied, /Template: Protected peptide \| Fmoc protected RGD-K/);
-  assert.match(copied, /Modification categories:/);
-  assert.match(copied, /N-terminal: 1/);
-  assert.match(copied, /side-chain protecting: 3/);
-  assert.match(copied, /Protected average MW/);
-  assert.match(copied, /Mass delta lookup:/);
+  assert.match(copied, /研发计算报告/);
+  assert.match(copied, /化学数据库版本: 1\.5\.0/);
+  assert.match(copied, /模板: Protected peptide \| Fmoc protected RGD-K/);
+  assert.match(copied, /修饰类别:/);
+  assert.match(copied, /N端: 1/);
+  assert.match(copied, /侧链保护: 3/);
+  assert.match(copied, /保护肽平均分子量/);
+  assert.match(copied, /Δmass 副产物查询:/);
   assert.match(copied, /Aspartimide\/glutarimide formation/);
   assert.doesNotMatch(copied, /SPPS reagent estimate:/);
 

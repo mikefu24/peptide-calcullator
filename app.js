@@ -291,8 +291,8 @@ function parseSequence(input) {
 }
 
 function sideChainSiteLabel(residue, index) {
-  const sideChain = residues[residue.name].sideChain || "side chain";
-  return `${index + 1}-${residue.name} side chain (${sideChain})`;
+  const sideChain = residues[residue.name].sideChain || "侧链";
+  return `${index + 1}-${residue.name} 侧链 (${sideChain})`;
 }
 
 function isCommonResidueProtection(residueName, group) {
@@ -305,12 +305,12 @@ function displayProtectingGroup(item) {
 }
 
 function groupSiteCategory(group, siteType) {
-  if (siteType === "backbone N") return "N-terminal";
-  if (groupSiteTypes.fattyAcid.has(group)) return "fatty acid";
-  if (groupSiteTypes.chelator.has(group)) return "chelator";
-  if (groupSiteTypes.linker.has(group)) return "linker";
-  if (siteType === "side-chain linker") return "linker";
-  return "side-chain protecting";
+  if (siteType === "backbone N") return "N端";
+  if (groupSiteTypes.fattyAcid.has(group)) return "脂肪酸修饰";
+  if (groupSiteTypes.chelator.has(group)) return "螯合剂";
+  if (groupSiteTypes.linker.has(group)) return "连接臂";
+  if (siteType === "side-chain linker") return "连接臂";
+  return "侧链保护";
 }
 
 function addDeprotectedGroupFormula(deprotectedFormula, group) {
@@ -324,13 +324,14 @@ function addDeprotectedGroupFormula(deprotectedFormula, group) {
 
 function addResidueModifier(protectedFormula, deprotectedFormula, protectingList, residue, index, mod, sitePrefix = sideChainSiteLabel(residue, index)) {
   if (!groups[mod]) return;
+  const isLinkerSite = sitePrefix.includes("linker") || sitePrefix.includes("连接臂");
   addFormula(protectedFormula, groups[mod].formula);
   addDeprotectedGroupFormula(deprotectedFormula, mod);
   protectingList.push({
     group: mod,
     site: sitePrefix,
-    siteType: sitePrefix.includes("linker") ? "side-chain linker" : "side-chain",
-    siteCategory: groupSiteCategory(mod, sitePrefix.includes("linker") ? "side-chain linker" : "side-chain"),
+    siteType: isLinkerSite ? "side-chain linker" : "side-chain",
+    siteCategory: groupSiteCategory(mod, isLinkerSite ? "side-chain linker" : "side-chain"),
     residue: residue.name,
     commonForResidue: isCommonResidueProtection(residue.name, mod),
     ...groups[mod],
@@ -338,7 +339,7 @@ function addResidueModifier(protectedFormula, deprotectedFormula, protectingList
 }
 
 function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingList, residue, index, unit, unitIndex, options = {}) {
-  const site = `${sideChainSiteLabel(residue, index)} linker ${unitIndex + 1}`;
+  const site = `${sideChainSiteLabel(residue, index)} 连接臂 ${unitIndex + 1}`;
   if (groups[unit]) {
     addFormula(protectedFormula, groups[unit].formula);
     addDeprotectedGroupFormula(deprotectedFormula, unit);
@@ -378,7 +379,7 @@ function addSideChainChainUnit(protectedFormula, deprotectedFormula, protectingL
       { ...chainResidue, name: chainResidue.name },
       index,
       mod,
-      `${site} ${chainResidue.name} side chain`,
+      `${site} ${chainResidue.name} 侧链`,
     );
   });
   chainResidue.sideChainChain.forEach((nestedUnit, nestedIndex) => {
@@ -407,7 +408,7 @@ function calculate(parsed) {
     if (groups[group]) {
       addFormula(protectedFormula, groups[group].formula);
       addDeprotectedGroupFormula(deprotectedFormula, group);
-      protectingList.push({ group, site: "main-chain N-terminus", siteType: "backbone N", siteCategory: groupSiteCategory(group, "backbone N"), commonForResidue: true, ...groups[group] });
+      protectingList.push({ group, site: "主链 N 端", siteType: "backbone N", siteCategory: groupSiteCategory(group, "backbone N"), commonForResidue: true, ...groups[group] });
     }
   });
 
@@ -442,17 +443,17 @@ function assessRisks(parsed, calc) {
   calc.protectingList
     .filter((item) => item.siteType === "side-chain" && !item.commonForResidue)
     .forEach((item) => {
-      risks.push({ level: "medium", text: `Check protecting group placement: ${item.group} on ${item.residue} side chain is not in the common library.` });
+      risks.push({ level: "medium", text: `请核对保护基位置：${item.residue} 侧链上的 ${item.group} 不在常见库中。` });
     });
   calc.protectingList
     .filter((item) => item.class?.startsWith("albumin-binding"))
     .forEach((item) => {
-      risks.push({ level: "medium", text: `Lipidated long-acting peptide motif detected: ${item.group} at ${item.site}. Confirm linker chain, salt form, and exact supplier building block.` });
+      risks.push({ level: "medium", text: `检测到脂肪化长效肽片段：${item.group} @ ${item.site}。建议确认连接臂、盐型和供应商积木结构。` });
     });
   parsed.aa
     .filter((residue) => residues[residue.name].special)
     .forEach((residue) => {
-      risks.push({ level: "medium", text: `Special residue detected: ${residue.name}. Confirm coupling method, stereochemistry, and library mass settings.` });
+      risks.push({ level: "medium", text: `检测到特殊残基：${residue.name}。建议确认偶联方法、构型和数据库质量设置。` });
     });
   if (sequence.includes("DG") || sequence.includes("DS") || sequence.includes("DT")) {
     risks.push({ level: "medium", text: "Asp-Gly/Asp-Ser/Asp-Thr 片段需关注 aspartimide（天冬酰亚胺）副反应。" });
@@ -555,14 +556,14 @@ function findDeltaMatches() {
 
 function renderDeltaLookup() {
   const { query, tolerance, matches } = findDeltaMatches();
-  if (els.deltaMatchCount) els.deltaMatchCount.textContent = `${matches.length} hits`;
+  if (els.deltaMatchCount) els.deltaMatchCount.textContent = `${matches.length} 条匹配`;
   if (!els.sideReactionMatches) return { query, tolerance, matches };
   if (!Number.isFinite(query)) {
-    els.sideReactionMatches.innerHTML = `<article class="side-reaction-empty">Enter a Δmass value to search the impurity table.</article>`;
+    els.sideReactionMatches.innerHTML = `<article class="side-reaction-empty">请输入 Δmass 数值以查询可能副产物。</article>`;
     return { query, tolerance, matches };
   }
   if (!matches.length) {
-    els.sideReactionMatches.innerHTML = `<article class="side-reaction-empty">No match within ±${fixed2(tolerance)} Da.</article>`;
+    els.sideReactionMatches.innerHTML = `<article class="side-reaction-empty">在 ±${fixed2(tolerance)} Da 范围内未找到匹配项。</article>`;
     return { query, tolerance, matches };
   }
   els.sideReactionMatches.innerHTML = matches
@@ -571,7 +572,7 @@ function renderDeltaLookup() {
         <article class="side-reaction-card">
           <div>
             <strong>${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da</strong>
-            <span>error ${fixed2(item.error)} Da</span>
+            <span>误差 ${fixed2(item.error)} Da</span>
           </div>
           <h3>${item.modification}</h3>
           <p>${item.category}</p>
@@ -675,21 +676,44 @@ function toggleActive(element, active) {
 function getKaiserGuidance(mode, result) {
   if (mode === "Chloranil") {
     if (result === "Positive") {
-      return "Warning: secondary amine (Pro) is strongly exposed. Deprotection is complete, or the next coupling may have failed.";
+      return "警告：二级胺（如 Pro）强阳性，可能脱保护完全，或下一步偶联未完成。";
     }
     if (result === "Weak Positive") {
-      return "Notice: a small amount of secondary amine may remain reactive. Extend coupling time or use a stronger coupling reagent such as HATU.";
+      return "提示：可能仍有少量二级胺未完全反应，建议延长偶联时间或使用更强缩合体系。";
     }
-    return "Normal: secondary amine appears fully capped. Proceed to the next reaction step.";
+    return "正常：二级胺显色阴性，可结合实际颜色进入下一步反应。";
   }
   if (mode === "Pro") {
-    if (result === "Positive") return "Warning: Proline-like secondary amine response is strong. Confirm with chloranil test before deciding pass/fail.";
-    if (result === "Weak Positive") return "Notice: secondary amine signal is borderline. Use chloranil test or LC-MS/process check for confirmation.";
-    return "Normal: Proline mode shows no obvious red-orange response.";
+    if (result === "Positive") return "警告：脯氨酸二级胺显色较强，建议用四氯苯醌或 LC-MS 复核。";
+    if (result === "Weak Positive") return "提示：二级胺信号处于临界范围，建议结合四氯苯醌检测确认。";
+    return "正常：脯氨酸模式未见明显红橙色响应。";
   }
-  if (result === "Positive") return "Warning: free primary amine signal is strong. Coupling may be incomplete.";
-  if (result === "Weak Positive") return "Notice: weak primary amine signal. Consider recoupling or extending coupling time.";
-  return "Normal: primary amine signal is negative.";
+  if (result === "Positive") return "警告：一级胺阳性信号强，偶联可能未完成。";
+  if (result === "Weak Positive") return "提示：一级胺弱阳性，建议考虑重复偶联或延长偶联时间。";
+  return "正常：一级胺显色阴性。";
+}
+
+function detectionResultLabel(result) {
+  return {
+    Positive: "阳性",
+    "Weak Positive": "弱阳性",
+    Negative: "阴性",
+  }[result] || result;
+}
+
+function riskLevelLabel(level) {
+  return {
+    high: "高",
+    medium: "中",
+    low: "低",
+    High: "高",
+    Medium: "中",
+    Low: "低",
+  }[level] || level;
+}
+
+function saltDisplayLabel(salt, saltEquiv) {
+  return salt.label === "Free" || saltEquiv === 0 ? "游离型" : `${saltEquiv} ${salt.label}`;
 }
 
 function renderKaiserReadout() {
@@ -699,7 +723,7 @@ function renderKaiserReadout() {
   toggleActive(els.kaiserProMode, kaiserDetectionMode === "Pro");
   toggleActive(els.kaiserChloranilMode, kaiserDetectionMode === "Chloranil");
   if (els.kaiserStatus) {
-    els.kaiserStatus.textContent = detection.result;
+    els.kaiserStatus.textContent = detectionResultLabel(detection.result);
     els.kaiserStatus.closest?.(".kaiser-status-card")?.setAttribute("data-result", detection.result);
   }
   if (els.kaiserProgress) els.kaiserProgress.style.width = `${Math.round(detection.score)}%`;
@@ -829,7 +853,7 @@ function drawKaiserVideoFrame() {
 
 async function startKaiserCamera() {
   if (!navigator.mediaDevices?.getUserMedia || !els.kaiserVideo) {
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Camera API unavailable; use Load Photo";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "当前环境不支持实时相机，请使用导入照片";
     return;
   }
   try {
@@ -845,14 +869,14 @@ async function startKaiserCamera() {
     });
     els.kaiserVideo.srcObject = kaiserStream;
     await els.kaiserVideo.play();
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Live tube ROI sampling";
-    if (els.startKaiserCamera) els.startKaiserCamera.textContent = "Restart Camera";
-    if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "Take Photo";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "实时试管 ROI 采样中";
+    if (els.startKaiserCamera) els.startKaiserCamera.textContent = "重启相机";
+    if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "拍照分析";
     if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
     drawKaiserVideoFrame();
   } catch (error) {
-    const reason = error?.name === "NotAllowedError" ? "Camera permission denied" : "Camera unavailable";
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = `${reason}; use Load Photo`;
+    const reason = error?.name === "NotAllowedError" ? "相机权限被拒绝" : "相机不可用";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = `${reason}，请检查权限或导入照片`;
   }
 }
 
@@ -861,7 +885,7 @@ function captureKaiserFrame() {
   const canvas = els.kaiserCanvas;
   const context = canvas?.getContext?.("2d");
   if (!video || !canvas || !context || video.readyState < 2) {
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Start camera before taking photo";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "请先开启相机再拍照";
     return;
   }
   if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
@@ -869,8 +893,8 @@ function captureKaiserFrame() {
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   updateKaiserMetricsFromCanvas();
   renderKaiserHeatmapOverlay();
-  if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Photo captured; ROI analyzed";
-  if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "Retake";
+  if (els.kaiserCameraState) els.kaiserCameraState.textContent = "已拍照，试管 ROI 已分析";
+  if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "重新拍照";
 }
 
 async function setKaiserTorch(enabled) {
@@ -880,7 +904,7 @@ async function setKaiserTorch(enabled) {
     await track.applyConstraints({ advanced: [{ torch: enabled }] });
   } catch (error) {
     if (els.kaiserTorch) els.kaiserTorch.checked = false;
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Flash not supported";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "当前设备不支持闪光灯常亮";
   }
 }
 
@@ -888,28 +912,28 @@ function buildCsv() {
   if (!currentResult) render();
   const result = currentResult;
   const rows = [
-    ["Field", "Value"],
-    ["Report profile", result.reportProfile],
-    ["Template", result.template ? `${result.template.family} | ${result.template.name}` : "Custom sequence"],
-    ["Chemistry library version", chemistryLibrary.version],
-    ["Sequence", result.sequence],
-    ["Protected average MW", fixed(result.calc.protectedMass.avg)],
-    ["Protected monoisotopic mass", fixed(result.calc.protectedMass.mono)],
-    ["Deprotected average MW", fixed(result.calc.deprotectedMass.avg)],
-    ["Deprotected monoisotopic mass", fixed(result.calc.deprotectedMass.mono)],
-    ["Salt form", result.saltLabel],
-    ["Salt form average MW", fixed(result.saltMass.avg)],
-    ["Salt form monoisotopic mass", fixed(result.saltMass.mono)],
-    ["Protected formula", result.protectedFormulaText],
-    ["Deprotected formula", result.deprotectedFormulaText],
-    ["Salt form formula", result.saltFormulaText],
-    ["N-terminus", result.nTermText],
-    ["C-terminus", result.cTermText],
-    ["Modification categories", Object.entries(protectingCategorySummary(result.calc.protectingList)).map(([category, count]) => `${category}: ${count}`).join("; ") || "None"],
-    ["Protecting groups", result.calc.protectingList.map((item) => `${item.label} @ ${item.site}`).join("; ")],
-    ["Risks", result.risks.map((risk) => `[${risk.level}] ${risk.text}`).join("; ")],
-    ["Mass delta query", Number.isFinite(result.delta.query) ? `${fixed2(result.delta.query)} Da ±${fixed2(result.delta.tolerance)}` : ""],
-    ["Mass delta matches", result.delta.matches.map((item) => `${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da ${item.modification}`).join("; ")],
+    ["字段", "数值"],
+    ["报告类型", result.reportProfile],
+    ["模板", result.template ? `${result.template.family} | ${result.template.name}` : "自定义序列"],
+    ["化学数据库版本", chemistryLibrary.version],
+    ["序列", result.sequence],
+    ["保护肽平均分子量", fixed(result.calc.protectedMass.avg)],
+    ["保护肽单同位素质量", fixed(result.calc.protectedMass.mono)],
+    ["脱保护肽平均分子量", fixed(result.calc.deprotectedMass.avg)],
+    ["脱保护肽单同位素质量", fixed(result.calc.deprotectedMass.mono)],
+    ["盐型", result.saltLabel],
+    ["盐型平均分子量", fixed(result.saltMass.avg)],
+    ["盐型单同位素质量", fixed(result.saltMass.mono)],
+    ["保护态分子式", result.protectedFormulaText],
+    ["脱保护态分子式", result.deprotectedFormulaText],
+    ["盐型分子式", result.saltFormulaText],
+    ["N 端", result.nTermText],
+    ["C 端", result.cTermText],
+    ["修饰类别", Object.entries(protectingCategorySummary(result.calc.protectingList)).map(([category, count]) => `${category}: ${count}`).join("; ") || "无"],
+    ["保护基 / 修饰", result.calc.protectingList.map((item) => `${item.label} @ ${item.site}`).join("; ")],
+    ["合成风险", result.risks.map((risk) => `[${riskLevelLabel(risk.level)}] ${risk.text}`).join("; ")],
+    ["Δmass 查询", Number.isFinite(result.delta.query) ? `${fixed2(result.delta.query)} Da ±${fixed2(result.delta.tolerance)} Da` : ""],
+    ["Δmass 匹配", result.delta.matches.map((item) => `${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da ${item.modification}`).join("; ")],
   ];
   return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
 }
@@ -924,7 +948,7 @@ function exportPdf() {
   printWindow.document.write(`<!doctype html>
     <html>
       <head>
-        <title>Protected Peptide Calculator Report</title>
+        <title>保护肽分子量计算报告</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 32px; color: #111; }
           h1 { font-size: 22px; margin: 0 0 18px; }
@@ -932,7 +956,7 @@ function exportPdf() {
         </style>
       </head>
       <body>
-        <h1>Protected Peptide Calculator Report</h1>
+        <h1>保护肽分子量计算报告</h1>
         <pre>${report.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre>
       </body>
     </html>`);
@@ -957,7 +981,7 @@ function render() {
     salt.label === "Free" || saltEquiv === 0
       ? deprotectedFormulaText
       : `${deprotectedFormulaText}·${saltEquiv}${salt.label}`;
-  const saltLabel = salt.label === "Free" || saltEquiv === 0 ? "Free" : `${saltEquiv} ${salt.label}`;
+  const saltLabel = saltDisplayLabel(salt, saltEquiv);
 
   els.protectedAvg.textContent = fixed(calc.protectedMass.avg);
   els.protectedMono.textContent = fixed(calc.protectedMass.mono);
@@ -968,11 +992,11 @@ function render() {
   els.saltFormula.textContent = saltLabel;
   els.saltAvg.textContent = fixed(saltMass.avg);
   els.saltMono.textContent = fixed(saltMass.mono);
-  els.residueCount.textContent = `${parsed.aa.length} aa`;
+  els.residueCount.textContent = `${parsed.aa.length} 个残基`;
   els.protectingGroupCount.textContent = `${calc.protectingList.length}`;
   els.parseStatus.textContent = parsed.errors.length ? "需校对" : "已解析";
   const nTermText = parsed.nTerminal.length ? parsed.nTerminal.join(", ") : "H";
-  const cTermText = parsed.cTerminal.length ? parsed.cTerminal.join(", ") : "Missing";
+  const cTermText = parsed.cTerminal.length ? parsed.cTerminal.join(", ") : "缺失";
   els.terminalSummary.innerHTML = `
     <span class="terminal-pill">N端: ${nTermText}</span>
     <span class="terminal-pill">C端: ${cTermText}</span>
@@ -987,8 +1011,8 @@ function render() {
           <span class="sequence-mods ${aa.mods.some((mod) => !groups[mod]) ? "error" : ""}">
             ${
               [
-                aa.mods.length ? `side chain: ${aa.mods.join(", ")}` : "",
-                aa.sideChainChain.length ? `side-chain chain: ${aa.sideChainChain.join("-")}` : "",
+                aa.mods.length ? `侧链保护: ${aa.mods.join(", ")}` : "",
+                aa.sideChainChain.length ? `侧链连接: ${aa.sideChainChain.join("-")}` : "",
               ]
                 .filter(Boolean)
                 .join("; ") || "无侧链保护"
@@ -1011,21 +1035,20 @@ function render() {
     : risks.some((risk) => risk.level === "medium")
       ? "Medium"
       : "Low";
-  els.riskLevel.textContent = topRisk;
+  els.riskLevel.textContent = riskLevelLabel(topRisk);
 
   const protectionRows = calc.protectingList.length
     ? calc.protectingList.map((item) => `- ${displayProtectingGroup(item)} @ ${item.site} (${item.siteCategory}; ${item.class}; ${item.labile})`).join("\n")
     : "- 无";
 
-  const riskRows = risks.map((risk) => `- [${risk.level}] ${risk.text}`).join("\n");
   const deltaRows = delta.matches.length
     ? delta.matches.map((item) => `- ${item.deltaAvg > 0 ? "+" : ""}${item.deltaAvg} Da: ${item.modification} (${item.category})`).join("\n")
-    : "- No match";
+    : "- 无匹配";
   const template = selectedTemplate();
   const reportProfile = selectedReportProfile();
   const categoryRows = Object.entries(protectingCategorySummary(calc.protectingList))
     .map(([category, count]) => `- ${category}: ${count}`)
-    .join("\n") || "- None";
+    .join("\n") || "- 无";
   currentResult = {
     sequence: els.input.value.trim(),
     template,
@@ -1045,36 +1068,36 @@ function render() {
 
   els.reportText.textContent = [
     reportProfile,
-    `Chemistry library version: ${chemistryLibrary.version}`,
-    `Template: ${template ? `${template.family} | ${template.name}` : "Custom sequence"}`,
-    `Sequence: ${els.input.value.trim()}`,
-    `Protected average MW: ${fixed(calc.protectedMass.avg)}`,
-    `Protected monoisotopic mass: ${fixed(calc.protectedMass.mono)}`,
-    `Deprotected average MW: ${fixed(calc.deprotectedMass.avg)}`,
-    `Deprotected monoisotopic mass: ${fixed(calc.deprotectedMass.mono)}`,
-    `Salt form average MW: ${fixed(saltMass.avg)} (${els.saltFormula.textContent})`,
-    `Salt form monoisotopic mass: ${fixed(saltMass.mono)} (${els.saltFormula.textContent})`,
-    `Protected formula: ${protectedFormulaText}`,
-    `Deprotected formula: ${deprotectedFormulaText}`,
-    `Salt form formula: ${saltFormulaText}`,
-    `N-terminus: ${nTermText}`,
-    `C-terminus: ${cTermText}`,
+    `化学数据库版本: ${chemistryLibrary.version}`,
+    `模板: ${template ? `${template.family} | ${template.name}` : "自定义序列"}`,
+    `序列: ${els.input.value.trim()}`,
+    `保护肽平均分子量: ${fixed(calc.protectedMass.avg)}`,
+    `保护肽单同位素质量: ${fixed(calc.protectedMass.mono)}`,
+    `脱保护肽平均分子量: ${fixed(calc.deprotectedMass.avg)}`,
+    `脱保护肽单同位素质量: ${fixed(calc.deprotectedMass.mono)}`,
+    `盐型平均分子量: ${fixed(saltMass.avg)} (${els.saltFormula.textContent})`,
+    `盐型单同位素质量: ${fixed(saltMass.mono)} (${els.saltFormula.textContent})`,
+    `保护态分子式: ${protectedFormulaText}`,
+    `脱保护态分子式: ${deprotectedFormulaText}`,
+    `盐型分子式: ${saltFormulaText}`,
+    `N端: ${nTermText}`,
+    `C端: ${cTermText}`,
     "",
-    "Modification categories:",
+    "修饰类别:",
     categoryRows,
     "",
-    "Protecting groups:",
+    "保护基 / 修饰:",
     protectionRows,
     "",
-    "Potential synthesis risks:",
-    riskRows,
+    "潜在合成风险:",
+    risks.map((risk) => `- [${riskLevelLabel(risk.level)}] ${risk.text}`).join("\n"),
     "",
-    "Mass delta lookup:",
-    Number.isFinite(delta.query) ? `- Query: ${fixed2(delta.query)} Da; tolerance ±${fixed2(delta.tolerance)} Da` : "- Query: not entered",
+    "Δmass 副产物查询:",
+    Number.isFinite(delta.query) ? `- 查询值: ${fixed2(delta.query)} Da; 允许误差 ±${fixed2(delta.tolerance)} Da` : "- 查询值: 未输入",
     deltaRows,
     "",
-    "Note: masses use residue formula + terminal H2O; protecting groups are modeled as net attached increments.",
-    `Side reaction note: Δmass matches use average mass deviations from ${sideReactionSource}; treat them as impurity investigation clues, not final structural confirmation.`,
+    "说明: 分子量按残基公式 + 末端 H2O 计算；保护基按连接后的净增量建模。",
+    `副产物提示: Δmass 匹配使用 ${sideReactionSource} 的平均质量差，仅作为杂质排查线索，不能替代结构确证。`,
   ].join("\n");
 }
 
@@ -1130,7 +1153,7 @@ els.kaiserPhotoInput?.addEventListener("change", () => {
     const image = new Image();
     image.addEventListener("load", () => {
       drawKaiserImage(image);
-      if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Photo ROI sampling";
+      if (els.kaiserCameraState) els.kaiserCameraState.textContent = "照片已导入，试管 ROI 已分析";
     });
     image.src = reader.result;
   });

@@ -77,7 +77,7 @@ console.log("Focused QA");
 setSequence(app, "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH");
 const groups = app.elements.get("#protectingGroups").innerHTML;
 ["N-Fmoc", "Pbf", "OtBu", "Boc"].forEach((group) => assert.match(groups, new RegExp(group)));
-["main-chain N-terminus", "Arg side chain", "Asp side chain", "Lys side chain"].forEach((site) => assert.match(groups, new RegExp(site)));
+["主链 N 端", "Arg 侧链", "Asp 侧链", "Lys 侧链"].forEach((site) => assert.match(groups, new RegExp(site)));
 assert.equal(app.elements.get("#protectingGroupCount").textContent, "4");
 console.log("PASS 1 | Protecting groups recognized with sites: N-Fmoc, Pbf, OtBu, Boc");
 
@@ -106,7 +106,7 @@ console.log("PASS 5 | Mobile browser support checks: viewport meta and single-co
 setSequence(app, "Fmoc-Arg(ABC)-Gly-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
 assert.match(app.elements.get("#riskList").innerHTML, /Unknown protecting group: ABC/);
-assert.match(app.elements.get("#riskLevel").textContent, /High/);
+assert.match(app.elements.get("#riskLevel").textContent, /高/);
 console.log("PASS 6 | Unknown protecting group reports friendly error: Unknown protecting group: ABC");
 
 setSequence(app, "Dde-Lys（Fmoc）-OH");
@@ -138,9 +138,9 @@ console.log("PASS 10 | tBu, OtBu, and Ac representative formulas passed");
 setSequence(app, "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);
-assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys side chain/);
-assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu side chain/);
-assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr side chain/);
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys 侧链/);
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu 侧链/);
+assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr 侧链/);
 assert.match(app.elements.get("#parsedSequence").innerHTML, /AEEA/);
 console.log("PASS 11 | Special residue/linker and side-chain protecting groups recognized: Dde, AEEA, Glu(OtBu), Tyr(tBu)");
 
@@ -153,7 +153,7 @@ console.log("PASS 12 | Special amino acids recognized: Aib and Pyr");
 setSequence(app, "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH");
 assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C18 diacid/);
-assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+assert.match(app.elements.get("#riskList").innerHTML, /脂肪化长效肽片段/);
 console.log("PASS 13 | Semaglutide-like lipidated peptide motif recognized: Aib and C18 diacid");
 
 setSequence(app, "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
@@ -174,7 +174,7 @@ assert.equal(app.elements.get("#deprotectedFormula").textContent, "C43H79N5O14")
 assert.equal(app.elements.get("#deprotectedAvg").textContent, "890.1254");
 assert.match(app.elements.get("#protectingGroups").innerHTML, /C20-OtBu/);
 assert.match(app.elements.get("#protectingGroups").innerHTML, /AEEA/);
-assert.match(app.elements.get("#riskList").innerHTML, /Lipidated long-acting peptide motif/);
+assert.match(app.elements.get("#riskList").innerHTML, /脂肪化长效肽片段/);
 console.log("PASS 16 | Tirzepatide protected/deprotected side-chain chain formula passed: C66H105N5O16 -> C43H79N5O14");
 
 setSequence(app, "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");

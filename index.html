@@ -3,37 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Protected Peptide Calculator</title>
+    <title>保护肽分子量计算器</title>
     <link rel="stylesheet" href="./styles.css?v=kaiser-lab" />
   </head>
   <body>
     <main class="app-shell">
       <header class="app-header">
         <div>
-          <p class="kicker">Peptide synthesis R&D</p>
-          <h1>Protected Peptide Calculator</h1>
+          <p class="kicker">多肽合成研发工具</p>
+          <h1>保护肽分子量计算器</h1>
         </div>
         <label class="theme-control">
-          Theme
+          主题
           <select id="themeSelect">
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
+            <option value="system">跟随系统</option>
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
           </select>
         </label>
       </header>
 
       <nav class="tool-switcher" aria-label="功能模块切换">
         <button class="tool-tab is-active" id="toolCalculator" type="button" data-tool="calculator">
-          <span>MW Calculator</span>
+          <span>分子量计算</span>
           <strong>分子量计算与副反应风险评估</strong>
         </button>
         <button class="tool-tab" id="toolKaiser" type="button" data-tool="kaiser">
-          <span>Kaiser Photo</span>
-          <strong>茚三酮 / Chloranil 拍照判断</strong>
+          <span>显色拍照</span>
+          <strong>茚三酮 / 四氯苯醌拍照判断</strong>
         </button>
         <button class="tool-tab" id="toolDelta" type="button" data-tool="delta">
-          <span>Δmass Lookup</span>
+          <span>Δmass 查询</span>
           <strong>质量差副产物查询</strong>
         </button>
       </nav>
@@ -42,35 +42,35 @@
         <section class="input-column" aria-label="序列输入">
           <article class="panel input-zone primary-panel">
             <div class="panel-head">
-              <h2>Sequence Input</h2>
-              <span id="parseStatus">Ready</span>
+              <h2>序列输入</h2>
+              <span id="parseStatus">待输入</span>
             </div>
-            <label for="sequenceInput">Protected peptide sequence</label>
+            <label for="sequenceInput">保护肽序列</label>
             <textarea id="sequenceInput" spellcheck="false">Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH</textarea>
             <label class="example-control">
-              Template library
+              内置模板
               <select id="exampleSelect"></select>
             </label>
             <label class="example-control compact-control">
-              Report profile
+              报告类型
               <select id="reportProfile">
-                <option value="rd">R&D calculation report</option>
-                <option value="quote">Quotation estimate report</option>
-                <option value="process">Process input report</option>
+                <option value="rd">研发计算报告</option>
+                <option value="quote">报价估算报告</option>
+                <option value="process">工艺输入报告</option>
               </select>
             </label>
             <div class="salt-controls">
               <label>
-                Salt form
+                盐型
                 <select id="saltType">
-                  <option value="free">Free base / acid</option>
+                  <option value="free">游离酸 / 游离碱</option>
                   <option value="tfa">TFA</option>
                   <option value="hcl">HCl</option>
                   <option value="acoh">AcOH</option>
                 </select>
               </label>
               <label>
-                Equiv.
+                当量
                 <input id="saltEquiv" type="number" min="0" max="20" step="0.5" value="1" />
               </label>
             </div>
@@ -78,8 +78,8 @@
 
           <article class="panel">
             <div class="panel-head">
-              <h2>Sequence Parse</h2>
-              <span id="residueCount">0 aa</span>
+              <h2>序列解析</h2>
+              <span id="residueCount">0 个残基</span>
             </div>
             <div id="terminalSummary" class="terminal-summary"></div>
             <ol id="parsedSequence" class="sequence-list"></ol>
@@ -90,19 +90,19 @@
         <aside class="results-column" aria-label="计算结果">
           <section class="metrics panel">
             <article>
-              <span>Protected Avg MW</span>
+              <span>保护肽平均分子量</span>
               <strong id="protectedAvg">--</strong>
             </article>
             <article>
-              <span>Protected Mono Mass</span>
+              <span>保护肽单同位素质量</span>
               <strong id="protectedMono">--</strong>
             </article>
             <article>
-              <span>Deprotected Avg MW</span>
+              <span>脱保护肽平均分子量</span>
               <strong id="deprotectedAvg">--</strong>
             </article>
             <article>
-              <span>Deprotected Mono Mass</span>
+              <span>脱保护肽单同位素质量</span>
               <strong id="deprotectedMono">--</strong>
             </article>
           </section>
@@ -110,20 +110,20 @@
           <section class="result-grid">
             <article class="panel">
               <div class="panel-head">
-                <h2>Formula</h2>
-                <span id="saltFormula">Free</span>
+                <h2>分子式</h2>
+                <span id="saltFormula">游离型</span>
               </div>
               <dl class="formula-list">
                 <div>
-                  <dt>Protected</dt>
+                  <dt>保护态</dt>
                   <dd id="protectedFormula">--</dd>
                 </div>
                 <div>
-                  <dt>Deprotected</dt>
+                  <dt>脱保护态</dt>
                   <dd id="deprotectedFormula">--</dd>
                 </div>
                 <div>
-                  <dt>Salt avg / mono</dt>
+                  <dt>盐型平均 / 单同位素</dt>
                   <dd><span id="saltAvg">--</span> / <span id="saltMono">--</span></dd>
                 </div>
               </dl>
@@ -131,7 +131,7 @@
 
             <article class="panel">
               <div class="panel-head">
-                <h2>Protecting Groups</h2>
+                <h2>保护基 / 修饰</h2>
                 <span id="protectingGroupCount">0</span>
               </div>
               <div id="protectingGroups" class="tag-cloud"></div>
@@ -139,7 +139,7 @@
 
             <article class="panel risk-panel">
               <div class="panel-head">
-                <h2>Synthesis Risk</h2>
+                <h2>合成风险</h2>
                 <span id="riskLevel">--</span>
               </div>
               <ul id="riskList" class="risk-list"></ul>
@@ -147,8 +147,8 @@
 
             <article class="panel report-panel">
               <div class="panel-head">
-                <h2>Report Preview</h2>
-                <span id="copyState">Not copied</span>
+                <h2>报告预览</h2>
+                <span id="copyState">未复制</span>
               </div>
               <pre id="reportText"></pre>
             </article>
@@ -159,35 +159,35 @@
       <section class="kaiser-module tool-view" data-tool-panel="kaiser" aria-label="茚三酮拍照显色判断">
         <article class="panel">
           <div class="panel-head">
-            <h2>Kaiser Photo Assistant</h2>
-            <span id="kaiserCameraState">Camera idle</span>
+            <h2>显色拍照助手</h2>
+            <span id="kaiserCameraState">相机待启动</span>
           </div>
           <div class="kaiser-tool">
             <div class="segmented-control" role="tablist" aria-label="Kaiser detection mode">
-              <button class="segment is-active" id="kaiserStandardMode" type="button">Standard</button>
-              <button class="segment" id="kaiserProMode" type="button">Proline</button>
-              <button class="segment" id="kaiserChloranilMode" type="button">Chloranil</button>
+              <button class="segment is-active" id="kaiserStandardMode" type="button">标准</button>
+              <button class="segment" id="kaiserProMode" type="button">脯氨酸</button>
+              <button class="segment" id="kaiserChloranilMode" type="button">四氯苯醌</button>
             </div>
             <div class="kaiser-camera">
               <video id="kaiserVideo" playsinline muted></video>
               <canvas id="kaiserCanvas" width="720" height="420"></canvas>
               <div class="kaiser-roi" aria-hidden="true"><span></span></div>
-              <p class="kaiser-camera-hint">Align the test tube liquid/resin area inside the tube frame</p>
+              <p class="kaiser-camera-hint">将试管内树脂 / 液体区域对准管形框底部</p>
               <label class="kaiser-torch">
                 <input id="kaiserTorch" type="checkbox" />
-                Flash
+                闪光灯
               </label>
             </div>
             <div class="kaiser-actions">
-              <button class="button primary" id="startKaiserCamera" type="button">Start Camera</button>
-              <button class="button primary" id="captureKaiserPhoto" type="button">Take Photo</button>
-              <button class="button" id="setKaiserBlank" type="button">Set Blank</button>
+              <button class="button primary" id="startKaiserCamera" type="button">开启相机</button>
+              <button class="button primary" id="captureKaiserPhoto" type="button">拍照分析</button>
+              <button class="button" id="setKaiserBlank" type="button">设置空白</button>
               <label class="kaiser-toggle">
                 <input id="kaiserHeatmapToggle" type="checkbox" checked />
-                Heatmap
+                伪热图
               </label>
               <label class="button">
-                Load Photo
+                导入照片
                 <input id="kaiserPhotoInput" type="file" accept="image/*" capture="environment" />
               </label>
             </div>
@@ -196,24 +196,24 @@
 
         <article class="panel">
           <div class="panel-head">
-            <h2>Kaiser Color Result</h2>
-            <span>CIELAB / Delta E</span>
+            <h2>显色分析结果</h2>
+            <span>CIELAB / 色差 ΔE</span>
           </div>
           <div class="kaiser-readout">
             <article class="kaiser-status-card">
-              <span>Status</span>
-              <strong id="kaiserStatus">Negative</strong>
+              <span>判定结果</span>
+              <strong id="kaiserStatus">阴性</strong>
             </article>
             <article>
-              <span>Positive intensity</span>
-              <div class="kaiser-scale"><span>Negative</span><span>Positive</span></div>
+              <span>阳性强度</span>
+              <div class="kaiser-scale"><span>阴性</span><span>阳性</span></div>
               <div class="progress-track"><div id="kaiserProgress" class="progress-fill"></div></div>
               <strong id="kaiserScore">0%</strong>
             </article>
-            <article><span>ROI Lab</span><strong id="kaiserCurrentLab">--</strong></article>
-            <article><span>Blank Lab</span><strong id="kaiserBlankLab">--</strong></article>
-            <article><span>Delta E</span><strong id="kaiserDeltaE">--</strong></article>
-            <article class="kaiser-guidance-card"><span>Lab action</span><strong id="kaiserGuidance">Normal: protected amine appears blocked. Proceed if the resin color stays unchanged.</strong></article>
+            <article><span>采样区 Lab</span><strong id="kaiserCurrentLab">--</strong></article>
+            <article><span>空白 Lab</span><strong id="kaiserBlankLab">--</strong></article>
+            <article><span>色差 ΔE</span><strong id="kaiserDeltaE">--</strong></article>
+            <article class="kaiser-guidance-card"><span>实验建议</span><strong id="kaiserGuidance">正常：未见明显游离胺显色，可结合实际颜色继续判断。</strong></article>
           </div>
         </article>
       </section>
@@ -221,8 +221,8 @@
       <section class="delta-module tool-view" data-tool-panel="delta" aria-label="分子量差值副产物查询">
         <article class="panel">
           <div class="panel-head">
-            <h2>Mass Delta Lookup</h2>
-            <span id="deltaMatchCount">0 hits</span>
+            <h2>Δmass 副产物查询</h2>
+            <span id="deltaMatchCount">0 条匹配</span>
           </div>
           <div class="delta-controls">
             <label>
@@ -230,7 +230,7 @@
               <input id="deltaMassInput" type="number" step="0.01" value="-18" />
             </label>
             <label>
-              Tolerance
+              允许误差
               <input id="deltaTolerance" type="number" min="0" step="0.1" value="0.5" />
             </label>
           </div>
@@ -238,18 +238,18 @@
 
         <article class="panel side-reaction-panel">
           <div class="panel-head">
-            <h2>Mass Delta Matches</h2>
-            <span>Average Δmass</span>
+            <h2>匹配副产物</h2>
+            <span>平均质量差</span>
           </div>
           <div id="sideReactionMatches" class="side-reaction-list"></div>
         </article>
       </section>
 
       <footer class="action-bar tool-view is-active" data-tool-panel="calculator" aria-label="操作按钮">
-        <button class="button primary" id="calculateButton" type="button">Calculate</button>
-        <button class="button" id="clearButton" type="button">Clear</button>
-        <button class="button" id="copyReport" type="button">Copy Result</button>
-        <button class="button" id="loadExample" type="button">Load Example</button>
+        <button class="button primary" id="calculateButton" type="button">计算</button>
+        <button class="button" id="clearButton" type="button">清空</button>
+        <button class="button" id="copyReport" type="button">复制结果</button>
+        <button class="button" id="loadExample" type="button">载入示例</button>
       </footer>
     </main>
 
