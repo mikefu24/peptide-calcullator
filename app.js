@@ -23,6 +23,7 @@ let kaiserFrameHandle = null;
 let kaiserBlankLab = { L: 92, a: -2, b: 18 };
 let kaiserCurrentLab = null;
 let kaiserCurrentRgb = null;
+let kaiserFrozen = false;
 
 const els = {
   toolTabs: Array.from(document.querySelectorAll("[data-tool]")),
@@ -70,7 +71,9 @@ const els = {
   kaiserProMode: document.querySelector("#kaiserProMode"),
   kaiserChloranilMode: document.querySelector("#kaiserChloranilMode"),
   startKaiserCamera: document.querySelector("#startKaiserCamera"),
+  captureKaiserPhoto: document.querySelector("#captureKaiserPhoto"),
   setKaiserBlank: document.querySelector("#setKaiserBlank"),
+  kaiserHeatmapToggle: document.querySelector("#kaiserHeatmapToggle"),
   kaiserTorch: document.querySelector("#kaiserTorch"),
   kaiserStatus: document.querySelector("#kaiserStatus"),
   kaiserProgress: document.querySelector("#kaiserProgress"),
@@ -611,34 +614,52 @@ function deltaE(current, blank) {
   return Math.sqrt((current.L - blank.L) ** 2 + (current.a - blank.a) ** 2 + (current.b - blank.b) ** 2);
 }
 
+function colorSignal(mode, lab, rgb = null) {
+  if (!lab) return 0;
+  if (mode === "Chloranil") {
+    const blueSignal = Math.max(0, -lab.b) * 2.2;
+    const greenSignal = rgb ? Math.max(0, rgb.g - rgb.r) * 0.22 : 0;
+    const darkness = Math.max(0, 72 - lab.L) * 0.95;
+    return Math.max(0, Math.min(100, blueSignal + greenSignal + darkness));
+  }
+  if (mode === "Pro") {
+    const redOrange = Math.max(0, lab.a - 8) * 1.4 + Math.max(0, lab.b - 12) * 0.7;
+    const darkness = Math.max(0, 70 - lab.L) * 0.45;
+    return Math.max(0, Math.min(100, redOrange + darkness));
+  }
+  const bluePurple = Math.max(0, -lab.b) * 2 + Math.max(0, lab.a) * 0.65;
+  const darkness = Math.max(0, 74 - lab.L) * 0.85;
+  return Math.max(0, Math.min(100, bluePurple + darkness));
+}
+
 function analyzeColor(mode, current, blank, rgb = null) {
   const distance = deltaE(current, blank) || 0;
   if (mode === "Standard") {
     if (current.L < 35 && current.b < 0) {
-      return { result: "Positive", score: Math.min(100, distance * 1.5) };
+      return { result: "Positive", score: Math.max(colorSignal(mode, current, rgb), Math.min(100, distance * 1.5)) };
     }
     if (current.L >= 35 && current.L < 70 && current.b < 10) {
-      return { result: "Weak Positive", score: Math.min(100, 40 + (70 - current.L)) };
+      return { result: "Weak Positive", score: Math.max(colorSignal(mode, current, rgb), Math.min(100, 40 + (70 - current.L))) };
     }
-    return { result: "Negative", score: Math.max(0, 10 - distance) };
+    return { result: "Negative", score: Math.min(18, Math.max(0, colorSignal(mode, current, rgb), 10 - distance)) };
   }
   if (mode === "Chloranil") {
     const rgbLooksDarkGreen = rgb ? rgb.g > rgb.r && current.L < 50 : false;
     const isBlueOrDarkGreen = current.b < -5 || rgbLooksDarkGreen;
     if (current.L < 40 && current.b < 0) {
-      return { result: "Positive", score: Math.min(100, distance * 1.8) };
+      return { result: "Positive", score: Math.max(colorSignal(mode, current, rgb), Math.min(100, distance * 1.8)) };
     }
     if (current.L >= 40 && current.L < 65 && (current.b < 5 || current.a < 0 || isBlueOrDarkGreen)) {
-      return { result: "Weak Positive", score: Math.min(100, 35 + (65 - current.L)) };
+      return { result: "Weak Positive", score: Math.max(colorSignal(mode, current, rgb), Math.min(100, 35 + (65 - current.L))) };
     }
-    return { result: "Negative", score: Math.max(0, 10 - distance) };
+    return { result: "Negative", score: Math.min(18, Math.max(0, colorSignal(mode, current, rgb), 10 - distance)) };
   }
   const isReddishOrange = current.a > 15 && current.b > 15;
   if (isReddishOrange && current.L < 50) {
-    return { result: "Positive", score: Math.min(100, distance * 2) };
+    return { result: "Positive", score: Math.max(colorSignal(mode, current, rgb), Math.min(100, distance * 2)) };
   }
   if (isReddishOrange && current.L >= 50) {
-    return { result: "Weak Positive", score: 50 };
+    return { result: "Weak Positive", score: Math.max(colorSignal(mode, current, rgb), 50) };
   }
   return { result: "Negative", score: 0 };
 }
@@ -707,14 +728,25 @@ function drawKaiserImage(image) {
   canvas.dataset.imageWidth = String(width);
   canvas.dataset.imageHeight = String(height);
   updateKaiserMetricsFromCanvas();
+  renderKaiserHeatmapOverlay();
 }
 
 function getKaiserRoi(canvas) {
-  const size = Math.round(Math.min(canvas.width, canvas.height) * 0.34);
+  const width = Math.round(canvas.width * 0.22);
+  const height = Math.round(canvas.height * 0.62);
+  const x = Math.round((canvas.width - width) / 2);
+  const y = Math.round(canvas.height * 0.18);
+  const sampleHeight = Math.round(height * 0.32);
+  const sampleInsetX = Math.round(width * 0.16);
   return {
-    x: Math.round((canvas.width - size) / 2),
-    y: Math.round((canvas.height - size) / 2),
-    size,
+    x,
+    y: y + height - sampleHeight,
+    width: width - sampleInsetX * 2,
+    height: sampleHeight,
+    tubeX: x,
+    tubeY: y,
+    tubeWidth: width,
+    tubeHeight: height,
   };
 }
 
@@ -723,7 +755,7 @@ function sampleKaiserRoi() {
   const context = canvas?.getContext?.("2d");
   if (!canvas || !context) return null;
   const roi = getKaiserRoi(canvas);
-  const data = context.getImageData(roi.x, roi.y, roi.size, roi.size).data;
+  const data = context.getImageData(roi.x, roi.y, roi.width, roi.height).data;
   let r = 0;
   let g = 0;
   let b = 0;
@@ -736,6 +768,42 @@ function sampleKaiserRoi() {
   }
   if (!count) return null;
   return { r: r / count, g: g / count, b: b / count };
+}
+
+function heatColor(signal) {
+  const value = Math.max(0, Math.min(100, signal));
+  if (value < 25) return [218, 163, 16, 122];
+  if (value < 50) return [211, 105, 28, 132];
+  if (value < 72) return [124, 64, 184, 150];
+  return [22, 80, 230, 170];
+}
+
+function renderKaiserHeatmapOverlay() {
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!canvas || !context || !els.kaiserHeatmapToggle?.checked) return;
+  const roi = getKaiserRoi(canvas);
+  const cols = 26;
+  const rows = 48;
+  const cellW = roi.tubeWidth / cols;
+  const cellH = roi.tubeHeight / rows;
+  context.save();
+  context.beginPath();
+  context.roundRect?.(roi.tubeX, roi.tubeY, roi.tubeWidth, roi.tubeHeight, [0, 0, roi.tubeWidth / 2, roi.tubeWidth / 2]);
+  if (!context.roundRect) context.rect(roi.tubeX, roi.tubeY, roi.tubeWidth, roi.tubeHeight);
+  context.clip();
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const x = Math.round(roi.tubeX + col * cellW);
+      const y = Math.round(roi.tubeY + row * cellH);
+      const pixel = context.getImageData(x, y, 1, 1).data;
+      const lab = rgbToLab({ r: pixel[0], g: pixel[1], b: pixel[2] });
+      const [r, g, b, alpha] = heatColor(colorSignal(kaiserDetectionMode, lab, { r: pixel[0], g: pixel[1], b: pixel[2] }));
+      context.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha / 255})`;
+      context.fillRect(roi.tubeX + col * cellW, roi.tubeY + row * cellH, Math.ceil(cellW), Math.ceil(cellH));
+    }
+  }
+  context.restore();
 }
 
 function updateKaiserMetricsFromCanvas() {
@@ -754,29 +822,55 @@ function drawKaiserVideoFrame() {
   if (video.readyState >= 2) {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     updateKaiserMetricsFromCanvas();
+    renderKaiserHeatmapOverlay();
   }
-  kaiserFrameHandle = window.requestAnimationFrame(drawKaiserVideoFrame);
+  if (!kaiserFrozen) kaiserFrameHandle = window.requestAnimationFrame(drawKaiserVideoFrame);
 }
 
 async function startKaiserCamera() {
   if (!navigator.mediaDevices?.getUserMedia || !els.kaiserVideo) {
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Use photo upload";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Camera API unavailable; use Load Photo";
     return;
   }
   try {
+    kaiserFrozen = false;
     if (kaiserStream) kaiserStream.getTracks().forEach((track) => track.stop());
     kaiserStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" } },
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
       audio: false,
     });
     els.kaiserVideo.srcObject = kaiserStream;
     await els.kaiserVideo.play();
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Live ROI sampling";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Live tube ROI sampling";
+    if (els.startKaiserCamera) els.startKaiserCamera.textContent = "Restart Camera";
+    if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "Take Photo";
     if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
     drawKaiserVideoFrame();
   } catch (error) {
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Camera unavailable";
+    const reason = error?.name === "NotAllowedError" ? "Camera permission denied" : "Camera unavailable";
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = `${reason}; use Load Photo`;
   }
+}
+
+function captureKaiserFrame() {
+  const video = els.kaiserVideo;
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!video || !canvas || !context || video.readyState < 2) {
+    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Start camera before taking photo";
+    return;
+  }
+  if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
+  kaiserFrozen = true;
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  updateKaiserMetricsFromCanvas();
+  renderKaiserHeatmapOverlay();
+  if (els.kaiserCameraState) els.kaiserCameraState.textContent = "Photo captured; ROI analyzed";
+  if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "Retake";
 }
 
 async function setKaiserTorch(enabled) {
@@ -1012,6 +1106,16 @@ els.setKaiserBlank?.addEventListener("click", () => {
   }
 });
 els.startKaiserCamera?.addEventListener("click", startKaiserCamera);
+els.captureKaiserPhoto?.addEventListener("click", () => {
+  if (kaiserFrozen) {
+    startKaiserCamera();
+  } else {
+    captureKaiserFrame();
+  }
+});
+els.kaiserHeatmapToggle?.addEventListener("change", () => {
+  if (kaiserFrozen) renderKaiserHeatmapOverlay();
+});
 els.kaiserTorch?.addEventListener("change", () => {
   setKaiserTorch(els.kaiserTorch.checked);
 });
@@ -1020,6 +1124,7 @@ els.kaiserPhotoInput?.addEventListener("change", () => {
   if (!file || typeof FileReader === "undefined" || typeof Image === "undefined") return;
   if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
   if (kaiserStream) kaiserStream.getTracks().forEach((track) => track.stop());
+  kaiserFrozen = true;
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const image = new Image();

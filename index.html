@@ -171,7 +171,8 @@
             <div class="kaiser-camera">
               <video id="kaiserVideo" playsinline muted></video>
               <canvas id="kaiserCanvas" width="720" height="420"></canvas>
-              <div class="kaiser-roi" aria-hidden="true"></div>
+              <div class="kaiser-roi" aria-hidden="true"><span></span></div>
+              <p class="kaiser-camera-hint">Align the test tube liquid/resin area inside the tube frame</p>
               <label class="kaiser-torch">
                 <input id="kaiserTorch" type="checkbox" />
                 Flash
@@ -179,7 +180,12 @@
             </div>
             <div class="kaiser-actions">
               <button class="button primary" id="startKaiserCamera" type="button">Start Camera</button>
+              <button class="button primary" id="captureKaiserPhoto" type="button">Take Photo</button>
               <button class="button" id="setKaiserBlank" type="button">Set Blank</button>
+              <label class="kaiser-toggle">
+                <input id="kaiserHeatmapToggle" type="checkbox" checked />
+                Heatmap
+              </label>
               <label class="button">
                 Load Photo
                 <input id="kaiserPhotoInput" type="file" accept="image/*" capture="environment" />
@@ -200,6 +206,7 @@
             </article>
             <article>
               <span>Positive intensity</span>
+              <div class="kaiser-scale"><span>Negative</span><span>Positive</span></div>
               <div class="progress-track"><div id="kaiserProgress" class="progress-fill"></div></div>
               <strong id="kaiserScore">0%</strong>
             </article>

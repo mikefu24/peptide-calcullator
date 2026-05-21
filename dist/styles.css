@@ -383,7 +383,8 @@ input:focus,
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #0b1114;
-  aspect-ratio: 12 / 7;
+  aspect-ratio: 9 / 14;
+  min-height: 520px;
 }
 
 .kaiser-camera video,
@@ -401,14 +402,47 @@ input:focus,
 
 .kaiser-roi {
   position: absolute;
-  top: 50%;
+  top: 18%;
   left: 50%;
-  width: min(42%, 220px);
-  aspect-ratio: 1 / 1;
-  border: 2px solid color-mix(in srgb, var(--accent) 75%, white);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 999px rgb(0 0 0 / 20%), inset 0 0 0 1px rgb(255 255 255 / 45%);
+  width: min(28%, 150px);
+  height: 62%;
+  border: 3px solid rgb(255 255 255 / 92%);
+  border-radius: 0 0 999px 999px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 30%), inset 0 0 0 1px rgb(255 255 255 / 38%);
+}
+
+.kaiser-roi::before {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  right: -3px;
+  height: 3px;
+  background: rgb(255 255 255 / 92%);
+  content: "";
+}
+
+.kaiser-roi span {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 12%;
+  height: 28%;
+  border: 2px dashed rgb(255 255 255 / 72%);
+  border-radius: 0 0 999px 999px;
+}
+
+.kaiser-camera-hint {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 92px;
+  margin: 0;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 70%);
 }
 
 .kaiser-torch {
@@ -430,7 +464,7 @@ input:focus,
 .kaiser-actions,
 .kaiser-readout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -466,6 +500,30 @@ input:focus,
 .kaiser-status-card strong {
   font-family: inherit;
   font-size: 28px;
+}
+
+.kaiser-toggle {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.kaiser-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
 }
 
 .kaiser-status-card[data-result="Positive"] {
