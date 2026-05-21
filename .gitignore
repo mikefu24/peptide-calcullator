@@ -3,4 +3,5 @@
 node_modules/
 release/
 .gradle-cache/
+build/
 .DS_Store

@@ -49,5 +49,8 @@
     "@capacitor/core": "^8.3.4",
     "electron": "^42.2.0",
     "electron-builder": "^26.8.1"
+  },
+  "dependencies": {
+    "@capacitor/ios": "^8.3.4"
   }
 }
