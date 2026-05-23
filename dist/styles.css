@@ -402,14 +402,17 @@ input:focus,
 
 .kaiser-roi {
   position: absolute;
-  top: 18%;
-  left: 50%;
-  width: min(28%, 150px);
-  height: 62%;
+  top: var(--kaiser-roi-top, 18%);
+  left: var(--kaiser-roi-center, 50%);
+  width: min(var(--kaiser-roi-width, 28%), 190px);
+  height: var(--kaiser-roi-height, 62%);
   border: 3px solid rgb(255 255 255 / 92%);
   border-radius: 0 0 999px 999px;
   transform: translateX(-50%);
   box-shadow: 0 0 0 999px rgb(0 0 0 / 30%), inset 0 0 0 1px rgb(255 255 255 / 38%);
+  cursor: move;
+  touch-action: none;
+  user-select: none;
 }
 
 .kaiser-roi::before {
@@ -424,12 +427,27 @@ input:focus,
 
 .kaiser-roi span {
   position: absolute;
-  left: 16%;
-  right: 16%;
-  bottom: 12%;
-  height: 28%;
+  top: var(--kaiser-sample-top, 64%);
+  left: 10%;
+  right: 10%;
+  height: var(--kaiser-sample-height, 32%);
   border: 2px dashed rgb(255 255 255 / 72%);
   border-radius: 0 0 999px 999px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.kaiser-roi i {
+  position: absolute;
+  right: -11px;
+  bottom: -11px;
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgb(255 255 255 / 94%);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 35%);
+  cursor: nwse-resize;
+  touch-action: none;
 }
 
 .kaiser-camera-hint {
@@ -443,22 +461,6 @@ input:focus,
   font-weight: 800;
   text-align: center;
   text-shadow: 0 1px 4px rgb(0 0 0 / 70%);
-}
-
-.kaiser-torch {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgb(255 255 255 / 28%);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background: rgb(0 0 0 / 48%);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 850;
 }
 
 .kaiser-actions,
@@ -534,6 +536,11 @@ input:focus,
 .kaiser-status-card[data-result="Weak Positive"] {
   border-color: color-mix(in srgb, #b7791f 55%, var(--line));
   background: color-mix(in srgb, #b7791f 12%, var(--panel-strong));
+}
+
+.kaiser-status-card[data-result="Invalid"] {
+  border-color: color-mix(in srgb, #687076 60%, var(--line));
+  background: color-mix(in srgb, #687076 16%, var(--panel-strong));
 }
 
 .kaiser-guidance-card strong {

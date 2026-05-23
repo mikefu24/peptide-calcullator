@@ -163,7 +163,7 @@
             <span id="kaiserCameraState">相机待启动</span>
           </div>
           <div class="kaiser-tool">
-            <div class="segmented-control" role="tablist" aria-label="Kaiser detection mode">
+            <div class="segmented-control" role="tablist" aria-label="显色检测模式">
               <button class="segment is-active" id="kaiserStandardMode" type="button">标准</button>
               <button class="segment" id="kaiserProMode" type="button">脯氨酸</button>
               <button class="segment" id="kaiserChloranilMode" type="button">四氯苯醌</button>
@@ -171,20 +171,16 @@
             <div class="kaiser-camera">
               <video id="kaiserVideo" playsinline muted></video>
               <canvas id="kaiserCanvas" width="720" height="420"></canvas>
-              <div class="kaiser-roi" aria-hidden="true"><span></span></div>
-              <p class="kaiser-camera-hint">将试管内树脂 / 液体区域对准管形框底部</p>
-              <label class="kaiser-torch">
-                <input id="kaiserTorch" type="checkbox" />
-                闪光灯
-              </label>
+              <div class="kaiser-roi" id="kaiserRoi" aria-label="可拖动取样框" role="application"><span id="kaiserSampleBand"></span><i></i></div>
+              <p class="kaiser-camera-hint">将试管放入框内；可直接拖动白色框或虚线树脂区微调</p>
             </div>
             <div class="kaiser-actions">
               <button class="button primary" id="startKaiserCamera" type="button">开启相机</button>
               <button class="button primary" id="captureKaiserPhoto" type="button">拍照分析</button>
               <button class="button" id="setKaiserBlank" type="button">设置空白</button>
               <label class="kaiser-toggle">
-                <input id="kaiserHeatmapToggle" type="checkbox" checked />
-                伪热图
+                <input id="kaiserHeatmapToggle" type="checkbox" />
+                拍照后伪热图
               </label>
               <label class="button">
                 导入照片

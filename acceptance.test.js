@@ -111,6 +111,12 @@ function bootApp() {
   assert.match(html, /id="kaiserGuidance"/);
   assert.match(html, /Δmass 副产物查询/);
   assert.match(html, /id="kaiserPhotoInput"/);
+  assert.match(html, /id="kaiserRoi"/);
+  assert.match(html, /id="kaiserSampleBand"/);
+  assert.doesNotMatch(html, /id="kaiserResultModal"/);
+  assert.doesNotMatch(html, /id="kaiserRoiCenter"/);
+  assert.doesNotMatch(html, /id="autoKaiserRoi"/);
+  assert.doesNotMatch(html, /id="kaiserTorch"/);
   assert.match(html, /id="deltaMassInput"/);
   assert.match(html, /id="sideReactionMatches"/);
   assert.match(data, /version:\s*"1\.5\.0"/);

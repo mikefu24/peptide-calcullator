@@ -24,6 +24,16 @@ let kaiserBlankLab = { L: 92, a: -2, b: 18 };
 let kaiserCurrentLab = null;
 let kaiserCurrentRgb = null;
 let kaiserFrozen = false;
+let kaiserBaseImageData = null;
+let kaiserRoiDrag = null;
+const kaiserRoiSettings = {
+  center: 50,
+  top: 18,
+  width: 28,
+  height: 62,
+  sampleTop: 64,
+  sampleHeight: 32,
+};
 
 const els = {
   toolTabs: Array.from(document.querySelectorAll("[data-tool]")),
@@ -74,7 +84,8 @@ const els = {
   captureKaiserPhoto: document.querySelector("#captureKaiserPhoto"),
   setKaiserBlank: document.querySelector("#setKaiserBlank"),
   kaiserHeatmapToggle: document.querySelector("#kaiserHeatmapToggle"),
-  kaiserTorch: document.querySelector("#kaiserTorch"),
+  kaiserRoi: document.querySelector("#kaiserRoi"),
+  kaiserSampleBand: document.querySelector("#kaiserSampleBand"),
   kaiserStatus: document.querySelector("#kaiserStatus"),
   kaiserProgress: document.querySelector("#kaiserProgress"),
   kaiserCurrentLab: document.querySelector("#kaiserCurrentLab"),
@@ -698,7 +709,15 @@ function detectionResultLabel(result) {
     Positive: "阳性",
     "Weak Positive": "弱阳性",
     Negative: "阴性",
+    Invalid: "无效",
   }[result] || result;
+}
+
+function isGrayBackgroundSample(lab, rgb = null) {
+  if (!lab || !rgb) return false;
+  const channelSpread = Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b);
+  const chroma = Math.sqrt(lab.a ** 2 + lab.b ** 2);
+  return lab.L > 24 && lab.L < 88 && chroma < 9 && channelSpread < 20;
 }
 
 function riskLevelLabel(level) {
@@ -718,7 +737,12 @@ function saltDisplayLabel(salt, saltEquiv) {
 
 function renderKaiserReadout() {
   const distance = deltaE(kaiserCurrentLab, kaiserBlankLab);
-  const detection = kaiserCurrentLab ? analyzeColor(kaiserDetectionMode, kaiserCurrentLab, kaiserBlankLab, kaiserCurrentRgb) : { result: "Negative", score: 0 };
+  const isInvalidSample = isGrayBackgroundSample(kaiserCurrentLab, kaiserCurrentRgb);
+  const detection = isInvalidSample
+    ? { result: "Invalid", score: 0 }
+    : kaiserCurrentLab
+      ? analyzeColor(kaiserDetectionMode, kaiserCurrentLab, kaiserBlankLab, kaiserCurrentRgb)
+      : { result: "Negative", score: 0 };
   toggleActive(els.kaiserStandardMode, kaiserDetectionMode === "Standard");
   toggleActive(els.kaiserProMode, kaiserDetectionMode === "Pro");
   toggleActive(els.kaiserChloranilMode, kaiserDetectionMode === "Chloranil");
@@ -727,11 +751,16 @@ function renderKaiserReadout() {
     els.kaiserStatus.closest?.(".kaiser-status-card")?.setAttribute("data-result", detection.result);
   }
   if (els.kaiserProgress) els.kaiserProgress.style.width = `${Math.round(detection.score)}%`;
-  if (els.kaiserScore) els.kaiserScore.textContent = `${Math.round(detection.score)}%`;
+  if (els.kaiserScore) els.kaiserScore.textContent = isInvalidSample ? "无效" : `${Math.round(detection.score)}%`;
   if (els.kaiserCurrentLab) els.kaiserCurrentLab.textContent = labToText(kaiserCurrentLab);
   if (els.kaiserBlankLab) els.kaiserBlankLab.textContent = labToText(kaiserBlankLab);
   if (els.kaiserDeltaE) els.kaiserDeltaE.textContent = distance === null ? "--" : fixed2(distance);
-  if (els.kaiserGuidance) els.kaiserGuidance.textContent = getKaiserGuidance(kaiserDetectionMode, detection.result);
+  if (els.kaiserGuidance) {
+    els.kaiserGuidance.textContent = isInvalidSample
+      ? "取样区疑似灰色背景或非试管底部显色区域，本次结果已屏蔽。请将虚线区贴近树脂/溶液底部后重拍。"
+      : getKaiserGuidance(kaiserDetectionMode, detection.result);
+  }
+  return detection;
 }
 
 function drawKaiserImage(image) {
@@ -751,26 +780,72 @@ function drawKaiserImage(image) {
   canvas.dataset.imageY = String(y);
   canvas.dataset.imageWidth = String(width);
   canvas.dataset.imageHeight = String(height);
+  kaiserBaseImageData = context.getImageData(0, 0, canvas.width, canvas.height);
   updateKaiserMetricsFromCanvas();
-  renderKaiserHeatmapOverlay();
+  applyKaiserHeatmapIfNeeded();
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function syncKaiserRoiOverlay() {
+  const roi = els.kaiserRoi || document.querySelector(".kaiser-roi");
+  if (!roi?.style?.setProperty) return;
+  roi.style.setProperty("--kaiser-roi-center", `${kaiserRoiSettings.center}%`);
+  roi.style.setProperty("--kaiser-roi-top", `${kaiserRoiSettings.top}%`);
+  roi.style.setProperty("--kaiser-roi-width", `${kaiserRoiSettings.width}%`);
+  roi.style.setProperty("--kaiser-roi-height", `${kaiserRoiSettings.height}%`);
+  roi.style.setProperty("--kaiser-sample-top", `${kaiserRoiSettings.sampleTop}%`);
+  roi.style.setProperty("--kaiser-sample-height", `${kaiserRoiSettings.sampleHeight}%`);
+}
+
+function moveKaiserRoi(deltaXPercent, deltaYPercent) {
+  kaiserRoiSettings.center = clamp(kaiserRoiSettings.center + deltaXPercent, 25, 75);
+  kaiserRoiSettings.top = clamp(kaiserRoiSettings.top + deltaYPercent, 6, 34);
+  syncKaiserRoiOverlay();
+  refreshKaiserAnalysisFromCurrentFrame();
+}
+
+function moveKaiserSample(deltaYPercent) {
+  kaiserRoiSettings.sampleTop = clamp(kaiserRoiSettings.sampleTop + deltaYPercent, 52, 68);
+  syncKaiserRoiOverlay();
+  refreshKaiserAnalysisFromCurrentFrame();
+}
+
+function resizeKaiserRoi(deltaXPercent, deltaYPercent) {
+  kaiserRoiSettings.width = clamp(kaiserRoiSettings.width + deltaXPercent, 18, 45);
+  kaiserRoiSettings.height = clamp(kaiserRoiSettings.height + deltaYPercent, 48, 76);
+  kaiserRoiSettings.sampleTop = clamp(kaiserRoiSettings.sampleTop, 52, 68);
+  syncKaiserRoiOverlay();
+  refreshKaiserAnalysisFromCurrentFrame();
 }
 
 function getKaiserRoi(canvas) {
-  const width = Math.round(canvas.width * 0.22);
-  const height = Math.round(canvas.height * 0.62);
-  const x = Math.round((canvas.width - width) / 2);
-  const y = Math.round(canvas.height * 0.18);
-  const sampleHeight = Math.round(height * 0.32);
+  const width = Math.round(canvas.width * (kaiserRoiSettings.width / 100));
+  const height = Math.round(canvas.height * (kaiserRoiSettings.height / 100));
+  const x = Math.round(canvas.width * (kaiserRoiSettings.center / 100) - width / 2);
+  const y = Math.round(canvas.height * (kaiserRoiSettings.top / 100));
+  const sampleHeight = Math.round(height * (kaiserRoiSettings.sampleHeight / 100));
   const sampleInsetX = Math.round(width * 0.16);
+  const sampleY = clamp(
+    Math.round(y + height * (kaiserRoiSettings.sampleTop / 100)),
+    y,
+    y + height - sampleHeight,
+  );
+  const tubeX = clamp(x, 0, canvas.width - 1);
+  const tubeY = clamp(y, 0, canvas.height - 1);
+  const sampleX = clamp(x + sampleInsetX, 0, canvas.width - 1);
+  const boundedSampleY = clamp(sampleY, 0, canvas.height - 1);
   return {
-    x,
-    y: y + height - sampleHeight,
-    width: width - sampleInsetX * 2,
-    height: sampleHeight,
-    tubeX: x,
-    tubeY: y,
-    tubeWidth: width,
-    tubeHeight: height,
+    x: sampleX,
+    y: boundedSampleY,
+    width: clamp(width - sampleInsetX * 2, 1, canvas.width - sampleX),
+    height: clamp(sampleHeight, 1, canvas.height - boundedSampleY),
+    tubeX,
+    tubeY,
+    tubeWidth: clamp(width, 1, canvas.width - tubeX),
+    tubeHeight: clamp(height, 1, canvas.height - tubeY),
   };
 }
 
@@ -806,6 +881,7 @@ function renderKaiserHeatmapOverlay() {
   const canvas = els.kaiserCanvas;
   const context = canvas?.getContext?.("2d");
   if (!canvas || !context || !els.kaiserHeatmapToggle?.checked) return;
+  if (!kaiserFrozen) return;
   const roi = getKaiserRoi(canvas);
   const cols = 26;
   const rows = 48;
@@ -830,12 +906,142 @@ function renderKaiserHeatmapOverlay() {
   context.restore();
 }
 
+function restoreKaiserBaseImage() {
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!canvas || !context || !kaiserBaseImageData) return false;
+  context.putImageData(kaiserBaseImageData, 0, 0);
+  return true;
+}
+
+function applyKaiserHeatmapIfNeeded() {
+  if (kaiserFrozen) {
+    restoreKaiserBaseImage();
+    renderKaiserHeatmapOverlay();
+  }
+}
+
 function updateKaiserMetricsFromCanvas() {
   const rgb = sampleKaiserRoi();
   if (!rgb) return;
   kaiserCurrentRgb = rgb;
   kaiserCurrentLab = rgbToLab(rgb);
   renderKaiserReadout();
+}
+
+function refreshKaiserAnalysisFromCurrentFrame() {
+  if (kaiserFrozen) {
+    restoreKaiserBaseImage();
+    updateKaiserMetricsFromCanvas();
+    applyKaiserHeatmapIfNeeded();
+    return;
+  }
+  updateKaiserMetricsFromCanvas();
+}
+
+function autoLocateKaiserTubeAndSample() {
+  const canvas = els.kaiserCanvas;
+  const context = canvas?.getContext?.("2d");
+  if (!canvas || !context) return;
+  if (kaiserFrozen) restoreKaiserBaseImage();
+
+  const centerStart = Math.round(canvas.width * 0.25);
+  const centerEnd = Math.round(canvas.width * 0.75);
+  const yStart = Math.round(canvas.height * 0.18);
+  const yEnd = Math.round(canvas.height * 0.88);
+  let bestX = canvas.width * (kaiserRoiSettings.center / 100);
+  let bestColumnScore = -Infinity;
+  for (let x = centerStart; x <= centerEnd; x += 4) {
+    const data = context.getImageData(x, yStart, 1, yEnd - yStart).data;
+    let score = 0;
+    let count = 0;
+    for (let index = 0; index < data.length; index += 20) {
+      const r = data[index];
+      const g = data[index + 1];
+      const b = data[index + 2];
+      score += Math.max(r, g, b) - Math.min(r, g, b) + Math.max(0, 225 - (r + g + b) / 3) * 0.18;
+      count += 1;
+    }
+    const normalized = count ? score / count : 0;
+    if (normalized > bestColumnScore) {
+      bestColumnScore = normalized;
+      bestX = x;
+    }
+  }
+  kaiserRoiSettings.center = clamp((bestX / canvas.width) * 100, 35, 65);
+  syncKaiserRoiOverlay();
+
+  const roi = getKaiserRoi(canvas);
+  const startY = Math.round(roi.tubeY + roi.tubeHeight * 0.45);
+  const endY = Math.round(roi.tubeY + roi.tubeHeight * 0.92);
+  let bestY = roi.y;
+  let bestScore = -Infinity;
+
+  for (let y = startY; y < endY; y += 3) {
+    const x = clamp(roi.tubeX + Math.round(roi.tubeWidth * 0.22), 0, canvas.width - 1);
+    const width = clamp(Math.round(roi.tubeWidth * 0.56), 1, canvas.width - x);
+    const pixels = context.getImageData(x, clamp(y, 0, canvas.height - 1), width, 1).data;
+    let score = 0;
+    let count = 0;
+    for (let index = 0; index < pixels.length; index += 16) {
+      const r = pixels[index];
+      const g = pixels[index + 1];
+      const b = pixels[index + 2];
+      score += Math.max(r, g, b) - Math.min(r, g, b) + Math.max(0, 210 - (r + g + b) / 3) * 0.45;
+      count += 1;
+    }
+    const normalized = count ? score / count : 0;
+    if (normalized > bestScore) {
+      bestScore = normalized;
+      bestY = y;
+    }
+  }
+
+  const sampleTop = ((bestY - roi.tubeY) / roi.tubeHeight) * 100 - kaiserRoiSettings.sampleHeight * 0.72;
+  kaiserRoiSettings.sampleTop = clamp(sampleTop, 56, 68);
+  syncKaiserRoiOverlay();
+  refreshKaiserAnalysisFromCurrentFrame();
+}
+
+function showKaiserResult() {
+  renderKaiserReadout();
+}
+
+function startKaiserRoiDrag(event) {
+  const camera = event.currentTarget?.closest?.(".kaiser-camera");
+  if (!camera) return;
+  const mode = event.target === els.kaiserSampleBand ? "sample" : event.target?.tagName === "I" ? "resize" : "move";
+  const bounds = camera.getBoundingClientRect();
+  kaiserRoiDrag = {
+    mode,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    bounds,
+  };
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function updateKaiserRoiDrag(event) {
+  if (!kaiserRoiDrag || kaiserRoiDrag.pointerId !== event.pointerId) return;
+  const deltaXPercent = ((event.clientX - kaiserRoiDrag.startX) / kaiserRoiDrag.bounds.width) * 100;
+  const deltaYPercent = ((event.clientY - kaiserRoiDrag.startY) / kaiserRoiDrag.bounds.height) * 100;
+  kaiserRoiDrag.startX = event.clientX;
+  kaiserRoiDrag.startY = event.clientY;
+  if (kaiserRoiDrag.mode === "sample") {
+    moveKaiserSample(deltaYPercent / (kaiserRoiSettings.height / 100));
+  } else if (kaiserRoiDrag.mode === "resize") {
+    resizeKaiserRoi(deltaXPercent, deltaYPercent);
+  } else {
+    moveKaiserRoi(deltaXPercent, deltaYPercent);
+  }
+}
+
+function endKaiserRoiDrag(event) {
+  if (!kaiserRoiDrag || kaiserRoiDrag.pointerId !== event.pointerId) return;
+  kaiserRoiDrag = null;
+  refreshKaiserAnalysisFromCurrentFrame();
 }
 
 function drawKaiserVideoFrame() {
@@ -846,7 +1052,6 @@ function drawKaiserVideoFrame() {
   if (video.readyState >= 2) {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     updateKaiserMetricsFromCanvas();
-    renderKaiserHeatmapOverlay();
   }
   if (!kaiserFrozen) kaiserFrameHandle = window.requestAnimationFrame(drawKaiserVideoFrame);
 }
@@ -858,6 +1063,7 @@ async function startKaiserCamera() {
   }
   try {
     kaiserFrozen = false;
+    kaiserBaseImageData = null;
     if (kaiserStream) kaiserStream.getTracks().forEach((track) => track.stop());
     kaiserStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -891,21 +1097,13 @@ function captureKaiserFrame() {
   if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
   kaiserFrozen = true;
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  kaiserBaseImageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  autoLocateKaiserTubeAndSample();
   updateKaiserMetricsFromCanvas();
-  renderKaiserHeatmapOverlay();
+  applyKaiserHeatmapIfNeeded();
   if (els.kaiserCameraState) els.kaiserCameraState.textContent = "已拍照，试管 ROI 已分析";
   if (els.captureKaiserPhoto) els.captureKaiserPhoto.textContent = "重新拍照";
-}
-
-async function setKaiserTorch(enabled) {
-  const track = kaiserStream?.getVideoTracks?.()[0];
-  if (!track?.applyConstraints) return;
-  try {
-    await track.applyConstraints({ advanced: [{ torch: enabled }] });
-  } catch (error) {
-    if (els.kaiserTorch) els.kaiserTorch.checked = false;
-    if (els.kaiserCameraState) els.kaiserCameraState.textContent = "当前设备不支持闪光灯常亮";
-  }
+  showKaiserResult();
 }
 
 function buildCsv() {
@@ -1128,6 +1326,10 @@ els.setKaiserBlank?.addEventListener("click", () => {
     renderKaiserReadout();
   }
 });
+els.kaiserRoi?.addEventListener("pointerdown", startKaiserRoiDrag);
+els.kaiserRoi?.addEventListener("pointermove", updateKaiserRoiDrag);
+els.kaiserRoi?.addEventListener("pointerup", endKaiserRoiDrag);
+els.kaiserRoi?.addEventListener("pointercancel", endKaiserRoiDrag);
 els.startKaiserCamera?.addEventListener("click", startKaiserCamera);
 els.captureKaiserPhoto?.addEventListener("click", () => {
   if (kaiserFrozen) {
@@ -1137,10 +1339,7 @@ els.captureKaiserPhoto?.addEventListener("click", () => {
   }
 });
 els.kaiserHeatmapToggle?.addEventListener("change", () => {
-  if (kaiserFrozen) renderKaiserHeatmapOverlay();
-});
-els.kaiserTorch?.addEventListener("change", () => {
-  setKaiserTorch(els.kaiserTorch.checked);
+  refreshKaiserAnalysisFromCurrentFrame();
 });
 els.kaiserPhotoInput?.addEventListener("change", () => {
   const file = els.kaiserPhotoInput.files?.[0];
@@ -1148,12 +1347,15 @@ els.kaiserPhotoInput?.addEventListener("change", () => {
   if (kaiserFrameHandle) window.cancelAnimationFrame(kaiserFrameHandle);
   if (kaiserStream) kaiserStream.getTracks().forEach((track) => track.stop());
   kaiserFrozen = true;
+  kaiserBaseImageData = null;
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const image = new Image();
     image.addEventListener("load", () => {
       drawKaiserImage(image);
+      autoLocateKaiserTubeAndSample();
       if (els.kaiserCameraState) els.kaiserCameraState.textContent = "照片已导入，试管 ROI 已分析";
+      showKaiserResult();
     });
     image.src = reader.result;
   });
@@ -1208,5 +1410,6 @@ els.copyReport.addEventListener("click", async () => {
 
 applyTheme(localStorage.getItem(themeStorageKey) || "system");
 setActiveTool("calculator");
+syncKaiserRoiOverlay();
 renderKaiserReadout();
 render();
