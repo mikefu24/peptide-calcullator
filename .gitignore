@@ -1,7 +1,12 @@
-# Local Netlify folder
-.netlify
-node_modules/
-release/
-.gradle-cache/
-build/
+# OS / editor
 .DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build artifacts kept intentionally: dist/ (offline single-file build)

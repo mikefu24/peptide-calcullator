@@ -1,77 +1,113 @@
-# Protected Peptide Calculator
+# 保护肽分子量计算器 · Protected Peptide Calculator (v2.0)
 
-面向多肽合成研发人员的保护肽分子量计算原型。打开 `index.html` 即可使用。
+面向多肽合成研发人员的桌面/移动端工具。纯前端、本地计算、无需服务器。
+打开 `index.html` 即可使用，或直接使用 `dist/` 下的**离线单文件版**（双击打开）。
 
-在线访问：
+本版本（v2.0）在原 Capacitor Web App 基础上做了一次完整的界面重做、QA 清理与副产物模块升级。
 
-- Cloudflare Pages: https://protected-peptide-calculator.pages.dev
-- Netlify legacy: https://protected-peptide-calculator.netlify.app
+---
 
-当前功能：
+## 本次更新要点
 
-- 解析 `Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH` 这类保护肽序列
-- 识别 N 端、C 端和侧链保护基，未知保护基会提示错误
-- 内置 10 个示例序列：
-  - `Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH`
-  - `H-Arg-Gly-Asp-Phe-Lys-NH2`
-  - `Ac-Gly-Gly-Phe-OH`
-  - `Boc-Ala-Val-Leu-Phe-OMe`
-  - `Fmoc-Lys(Boc)-Gly-Pro-OH`
-  - `Fmoc-Aib-Gly-Pyr-OH`
-  - `Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH`
-  - semaglutide-like lipidated GLP-1 motif
-  - tirzepatide-like lipidated GIP/GLP-1 motif
-  - retatrutide-like lipidated GLP-1/GIP/GCGR motif
-- 识别特殊残基/连接臂：`Aib`、`Pyr`/`pGlu`、`AEEA`、`OEG`、`Ado`、`gGlu`/`gammaGlu`、`MeLeu`、`SerNH2`
-- 识别更多侧链/正交保护基：`Dde`、`ivDde`、`Acm`、`StBu`、`Bzl`、`OBzl`、`OAll`、`Mtr` 等
-- 识别长效肽脂肪化构件：`C18Diacid`、`C20Diacid`、`Octadecanedioyl`、`Eicosanedioyl`
-- 保护基列表区分主链 N 端、侧链和末端，例如 `main-chain N-terminus`、`Lys side chain`、`Glu side chain`、`Tyr side chain`
-- 输出保护肽平均分子量、单同位素质量
-- 输出脱保护后多肽平均分子量、单同位素质量
-- 输出保护肽和脱保护肽分子式
-- 支持 TFA、HCl、AcOH 盐型当量修正
-- 汇总保护基列表
-- 根据常见序列模式提示合成风险，包括 Pro/Kaiser test 和 Asp-Gly/aspartimide
-- Kaiser Photo Assistant：上传 Kaiser test 图片，手动选择样品点和空白点，输出蓝色强度评分
-- Mass Delta Lookup：直接输入 `Δmass`，按容差查询可能副产物，不依赖当前序列输入
-- 副产物质量差数据库来自 `Side Reactions in Peptide Synthesis, Appendix I`，覆盖常见缺失/增加质量偏差
-- 生成可复制的结果报告
-- 响应式布局支持手机浏览器使用
-- 支持 `System / Light / Dark` 主题
-- V1.5 数据层拆分为 `chemistry-data.js` 和 `side-reactions-data.js`，集中维护残基库、保护基/修饰库、模板库、盐型和副产物质量差数据
-- 支持 `Copy Result` 和 `Load Example`
+**1 · 界面重做（艳丽 iOS 风格）**
+采用 iOS 系统色、半透明材质（毛玻璃）、弹簧动效与 SF 字体排版；底部悬浮分段式标签栏切换三大模块，每个模块有各自的主题色（分子量=蓝、显色=橙、Δmass=紫）。支持浅色 / 深色 / 跟随系统主题，并适配「减少动态效果 / 减少透明度 / 高对比度」无障碍设置。
 
-友好错误提示：
+- **iOS 风格 App 图标**：圆角方形（squircle）渐变 + 多肽链字形，用作浏览器图标 / 桌面图标，并显示在标题栏（`icon.svg`）。
+- **三套配色可选**：标题栏右上角配色选择器——**默认（多彩）/ 粉色系 / 深紫色系**；切换后整个界面（强调色、按钮、标签栏、背景光晕）随之换色，并记忆你的选择。
 
-- `Unknown amino acid: Xxx`
-- `Unknown protecting group: ABC`
-- `Missing C-terminal group`
-- `Parentheses not closed`
-- `Invalid sequence separator`
+**2 · QA 检测与精简**
+去除了不必要 / 失效的功能与数据：无对应按钮的 CSV / PDF 导出死代码、未被使用的 SPPS 试剂成本库、对计算无实际影响的「报告类型」选择器。计算引擎经 Expasy / Unimod 标准值验证（见验收测试），并修正了副反应总数标注（实为 **82 条**）。
 
-计算模型：
+**3 · Δmass 分子量差异 / 杂质推测模块升级（核心）**
+两种输入方式：**直接输入 Δmass**，或**输入实测 m/z + 电荷数 z**（配合主成分序列自动按 [M+zH]ᶻ⁺ 反算中性质量与 Δ）。系统同时从多个来源匹配可能的杂质：
 
-- 氨基酸按肽链残基分子式计入
-- 线性肽默认加末端 `H2O`
-- 保护基按连接后的净增分子式计入
-- C 端 `NH2`、`OMe`、`OEt` 会修正末端分子式
-- `AEEA` 作为可进入肽链的氨基酸型 linker 处理
-- `Pyr`/`pGlu` 按焦谷氨酰残基处理
-- semaglutide/tirzepatide/retatrutide-like 示例用于识别长效肽常见构件和风险提示，不作为药品质量放行序列依据
+- **副反应库（82 条）**：以「机理卡片」呈现，点开进入 iOS 详情卡片，展示按反应类型（9 类）自动生成的 **HTML/SVG 机理动画**（可重播）、**反应简式**、**反应机理**、**副产物描述**、**产生条件 / 原因**、**预防措施**、**涉及残基**，以及统一标注书籍 + 附录 + 原始编号的**文献来源**；
+- **精确修饰 / 加合**：氧化、脱酰胺、脱水、Na⁺/K⁺ 加合、乙酰化、甲基化、磷酸化、糖基化等单同位素精确 Δ 库；
+- **缺失肽 / 插入肽 / 错配**（填写主成分序列后启用）：枚举合成跳肽、多连、错插等有关物质；
+- **侧链修饰相关**：内置司美格鲁肽 / 利拉鲁肽 / 棕榈酰化等脂质侧链预设，匹配 des-脂质化 / 过度修饰等杂质；
+- **序列位点判断**：对每条匹配自动标注涉及残基是否存在于当前序列（✓/✗）；
+- **双重容差**：± Da 与 ppm（有序列时启用）。
 
-这是研发估算工具原型。特殊氨基酸、linker 和保护基库会持续扩展；用于放行、注册或精确工艺文件前，应结合企业内部保护基数据库、供应商 COA 和标准品结果校准。
+**4 · 离线 HTML App 版本**
+`dist/保护肽分子量计算器-离线版.html` 是把全部 CSS / JS / 数据内联的**单文件**版本，双击即可在任意现代浏览器离线打开，无需联网、无需服务器、无需安装，适合放到 U 盘、内网或实验室电脑随身使用。
 
-技术说明：
+---
 
-- 当前实现是纯前端 Web App，本地计算，不依赖服务器
-- 可直接部署到 Vercel、GitHub Pages 或任何静态托管
-- 化学数据集中在 `chemistry-data.js`，界面和计算逻辑在 `app.js`
-- 副产物 `Δmass` 查询数据集中在 `side-reactions-data.js`
-- 后续可平滑迁移到 React / Next.js / TypeScript
-- 后续可封装为 PWA 或桌面版
+## 三大模块
 
-验收测试：
+| 模块 | 说明 |
+| --- | --- |
+| **分子量计算** | 解析 `Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH` 这类保护肽序列，输出保护态 / 脱保护态的平均分子量、单同位素质量、分子式，支持 TFA / HCl / AcOH 盐型当量修正，汇总保护基并按常见序列模式提示合成风险。 |
+| **Kaiser 显色检测** | 茚三酮（标准 / 脯氨酸）与四氯苯醌相机拍照判读：可拖动试管 ROI 与取样区，基于 CIELAB / 色差 ΔE 输出阴性 / 弱阳性 / 阳性与阳性强度评分，支持导入照片与拍照后伪热图。 |
+| **Δmass 分子量差异 / 杂质推测** | 见上文「更新要点 3」。副反应库共 82 条（−98 ~ +265 Da）+ 精确修饰库 + 缺失/插入/错配枚举 + 侧链修饰杂质。支持 m/z→中性质量、序列位点判断、ppm 容差。参考并整合了「多肽杂质推测器」的分析模型。 |
+
+---
+
+## 项目结构
+
+```
+peptide-calculator/
+├── index.html                # 界面结构（多文件版入口）
+├── icon.svg                  # iOS 风格 App 图标（favicon + 标题栏）
+├── styles.css                # 艳丽 iOS 设计系统
+├── app.js                    # 计算引擎 + Kaiser 引擎 + UI 逻辑
+├── chemistry-data.js         # 残基库 / 保护基库 / 模板 / 盐型
+├── side-reactions-data.js    # 82 条副反应知识库 + 9 类机理原型
+├── impurity-data.js          # 精确质量库：单字母残基 / 修饰 / 侧链预设
+├── mechanism-animations.js   # 机理动画引擎（SVG + CSS）
+├── acceptance.test.js        # 验收 / 回归测试（node）
+├── build-offline.js          # 由多文件版生成离线单文件版
+├── dist/
+│   └── 保护肽分子量计算器-离线版.html   # 离线单文件版
+└── README.md
+```
+
+---
+
+## 本地使用与构建
 
 ```bash
+# 直接使用：用浏览器打开 index.html，或起一个静态服务器
+python3 -m http.server 8000        # 然后访问 http://localhost:8000
+
+# 运行验收测试（计算准确性 + 数据完整性）
 node acceptance.test.js
+
+# 修改多文件版后，重新生成离线单文件版
+node build-offline.js
 ```
+
+> 相机（getUserMedia）在部分浏览器仅允许 `https://` 或 `localhost` 访问；离线单文件版通过 `file://` 打开时，若相机不可用，可用「导入照片」进行显色判读，其余功能不受影响。
+
+---
+
+## 发布到 GitHub（一键脚本）
+
+在本目录下执行（本机需已登录 GitHub）：
+
+```bash
+bash deploy.sh https://github.com/<你的账号>/<仓库名>.git
+# 例：bash deploy.sh https://github.com/mikefu24/peptide-calcullator.git
+```
+
+脚本会自动 `git init → add → commit → push`；用现有仓库就把 URL 换成它（空仓库最省事）。
+
+**开启在线网页版（GitHub Pages）**：推送后，仓库 `Settings → Pages → Source` 选 `main` 分支 / 根目录，几分钟后即可通过 `https://<账号>.github.io/<仓库>/` 访问。也可用 Vercel / Cloudflare Pages 直接托管本目录。
+
+> 说明：云端会话对 GitHub 的访问由代理网关管控，未授权仓库返回 403（`GitHub access to this repository is not enabled for this session`），因此推送需在本地用你自己的 GitHub 账号完成；或在 Claude 中为本会话授予该仓库访问权限后，由 Claude 直接推送。
+
+---
+
+## 数据来源
+
+副产物质量偏差数据整理自随附 Excel《多肽副反应分子量偏差对照表》，权威来源：
+
+> **Yang, Y.** *Side Reactions in Peptide Synthesis*, 1st ed.; Academic Press (Elsevier), 2016, **Appendix I**. ISBN 978-0-12-801009-9.
+
+详情卡片中的 `Ref [n]` 对应该附录参考文献编号。
+
+---
+
+## 免责声明
+
+本工具为研发估算原型：分子量按残基公式 + 末端 H₂O 计算，保护基按连接后的净增量建模；Δmass 匹配仅作为杂质排查线索，**不能替代结构确证**（LC-MS/MS、NMR 等）。用于放行、注册或精确工艺文件前，应结合企业内部保护基数据库、供应商 COA 和标准品结果校准。

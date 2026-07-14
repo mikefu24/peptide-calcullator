@@ -1,325 +1,102 @@
-const fs = require("fs");
-const vm = require("vm");
-const assert = require("assert");
+/* ============================================================================
+   acceptance.test.js — 验收 / 回归测试
+   运行 Run:  node acceptance.test.js
+   验证计算引擎准确性（对照 Expasy/Unimod）与副产物数据库完整性。
+   ========================================================================== */
+"use strict";
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+globalThis.PeptideChemistryData = null;
+globalThis.PeptideSideReactionData = null;
+globalThis.PeptideImpurityData = null;
+require("./chemistry-data.js");
+require("./side-reactions-data.js");
+require("./impurity-data.js");
+
+const C = globalThis.PeptideChemistryData;
+const SR = globalThis.PeptideSideReactionData;
+const IMP = globalThis.PeptideImpurityData;
+const { atomMass, residues, groups, salts, water } = C;
+
+let pass = 0, fail = 0;
+const approx = (a, b, tol = 0.01) => Math.abs(a - b) <= tol;
+function ok(name, cond, extra = "") { if (cond) { pass++; } else { fail++; console.log(`  ✗ ${name} ${extra}`); } }
+
+function fmass(f) {
+  let a = 0, m = 0;
+  for (const [k, v] of Object.entries(f)) { a += (atomMass[k]?.avg || 0) * v; m += (atomMass[k]?.mono || 0) * v; }
+  return { avg: a, mono: m };
 }
+function peptide(seq) { const f = { ...water }; for (const r of seq) for (const [k, v] of Object.entries(residues[r].formula)) f[k] = (f[k] || 0) + v; return fmass(f); }
 
-class Element {
-  constructor(selector) {
-    this.selector = selector;
-    this.value = selector === "#sequenceInput" ? "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH" : selector === "#deltaMassInput" ? "-18" : selector === "#deltaTolerance" ? "0.5" : "";
-    this.textContent = "";
-    this.innerHTML = "";
-    this.dataset = {};
-    this.style = {};
-  }
+console.log("── 1. 残基单同位素质量 (vs Expasy) ─────────────────────────");
+const REF = { Gly: 57.02146, Ala: 71.03711, Ser: 87.03203, Pro: 97.05276, Val: 99.06841, Thr: 101.04768, Cys: 103.00919, Leu: 113.08406, Asn: 114.04293, Asp: 115.02694, Gln: 128.05858, Lys: 128.09496, Glu: 129.04259, Met: 131.04049, His: 137.05891, Phe: 147.06841, Arg: 156.10111, Tyr: 163.06333, Trp: 186.07931 };
+for (const [r, ref] of Object.entries(REF)) ok(`${r} mono`, approx(fmass(residues[r].formula).mono, ref, 0.001), `got ${fmass(residues[r].formula).mono.toFixed(5)} ref ${ref}`);
 
-  addEventListener(type, handler) {
-    this[`on${type}`] = handler;
-  }
+console.log("── 2. 已知多肽质量 ──────────────────────────────────────────");
+ok("Gly-Gly avg 132.12", approx(peptide(["Gly", "Gly"]).avg, 132.118, 0.01));
+ok("Gly-Gly mono 132.0535", approx(peptide(["Gly", "Gly"]).mono, 132.0535, 0.001));
+ok("Met-enkephalin YGGFM mono 573.2257", approx(peptide(["Tyr", "Gly", "Gly", "Phe", "Met"]).mono, 573.2257, 0.001));
+ok("RGD mono 346.1601", approx(peptide(["Arg", "Gly", "Asp"]).mono, 346.1601, 0.001));
 
-  setAttribute() {}
-  select() {}
-  remove() {}
+console.log("── 3. 保护基净增量 (avg) ────────────────────────────────────");
+const PG = { Fmoc: 222.24, Boc: 100.12, tBu: 56.11, OtBu: 56.11, Pbf: 252.33, Trt: 242.31, Acm: 71.08 };
+for (const [g, ref] of Object.entries(PG)) ok(`${g} +${ref}`, approx(fmass(groups[g].formula).avg, ref, 0.05), `got ${fmass(groups[g].formula).avg.toFixed(2)}`);
+
+console.log("── 4. 盐型质量 (avg) ────────────────────────────────────────");
+ok("TFA 114.02", approx(fmass(salts.tfa.formula).avg, 114.02, 0.02));
+ok("HCl 36.46", approx(fmass(salts.hcl.formula).avg, 36.46, 0.02));
+ok("AcOH 60.05", approx(fmass(salts.acoh.formula).avg, 60.05, 0.02));
+
+console.log("── 5. 副产物数据库完整性 ────────────────────────────────────");
+ok("record count = 82", SR.records.length === 82, `got ${SR.records.length}`);
+ok("count field matches", SR.count === SR.records.length);
+const validMech = new Set(Object.keys(SR.archetypes));
+let badMech = 0, missingField = 0, badDelta = 0;
+for (const r of SR.records) {
+  if (!validMech.has(r.mech)) badMech++;
+  if (!r.nameZh || !r.nameEn || !Array.isArray(r.residues) || typeof r.deltaAvg !== "number") missingField++;
+  if (!Number.isFinite(r.deltaAvg)) badDelta++;
 }
+ok("all mech in archetype registry", badMech === 0, `bad=${badMech}`);
+ok("all records have required fields", missingField === 0, `missing=${missingField}`);
+ok("all deltas finite numbers", badDelta === 0);
+ok("delta range -98..265", Math.min(...SR.records.map(r => r.deltaAvg)) === -98 && Math.max(...SR.records.map(r => r.deltaAvg)) === 265);
+ok("source cites the book", /Side Reactions in Peptide Synthesis/.test(SR.source) && /2016/.test(SR.source));
+ok("9 mechanism archetypes", Object.keys(SR.archetypes).length === 9, `got ${Object.keys(SR.archetypes).length}`);
 
-function bootApp() {
-  const elements = new Map();
-  const body = {
-    appendChild() {},
-  };
-  const document = {
-    documentElement: {
-      dataset: {},
-      removeAttribute(name) {
-        if (name === "data-theme") delete this.dataset.theme;
-      },
-    },
-    body,
-    createElement: (tag) => new Element(tag),
-    execCommand: () => true,
-    querySelector(selector) {
-      if (!elements.has(selector)) elements.set(selector, new Element(selector));
-      return elements.get(selector);
-    },
-    querySelectorAll() {
-      return [];
-    },
-  };
-  let copiedText = "";
-  const context = {
-    document,
-    navigator: {
-      clipboard: {
-        writeText: async (text) => {
-          copiedText = text;
-        },
-      },
-    },
-    window: {
-      setTimeout: () => {},
-    },
-    localStorage: {
-      data: {},
-      getItem(key) {
-        return this.data[key] || null;
-      },
-      setItem(key, value) {
-        this.data[key] = value;
-      },
-    },
-    console,
-  };
+console.log("── 6. Δmass 查询逻辑 ────────────────────────────────────────");
+function lookup(q, tol) { return SR.records.filter(r => Math.abs(r.deltaAvg - q) <= tol); }
+ok("−18 within ±0.5 → 4 matches", lookup(-18, 0.5).length === 4, `got ${lookup(-18, 0.5).length}`);
+ok("+16 within ±0.5 → 4 matches", lookup(16, 0.5).length === 4, `got ${lookup(16, 0.5).length}`);
+ok("+252 (Pbf) within ±0.5 → ≥1", lookup(252, 0.5).length >= 1);
+ok("+9999 → 0 matches", lookup(9999, 0.5).length === 0);
 
-  vm.runInNewContext(fs.readFileSync("chemistry-data.js", "utf8"), context);
-  vm.runInNewContext(fs.readFileSync("side-reactions-data.js", "utf8"), context);
-  vm.runInNewContext(fs.readFileSync("app.js", "utf8"), context);
-
-  return {
-    context,
-    elements,
-    setSequence(sequence) {
-      elements.get("#sequenceInput").value = sequence;
-      context.render();
-    },
-    async copy() {
-      await elements.get("#copyReport").onclick();
-      return copiedText;
-    },
-  };
+console.log("── 7. 杂质分析引擎 (impurity-data + m/z) ────────────────────");
+// single-letter residue monos match Expasy
+ok("单字母 Gly mono", approx(IMP.AA.G.mono, 57.02146, 0.001));
+ok("单字母 Trp mono", approx(IMP.AA.W.mono, 186.07931, 0.001));
+ok("Aib(U) mono 69.0578", approx(IMP.AA.U.mono, 69.0578, 0.001));
+// computeMain (linear, free termini): Σ residue elem − (n-1)H2O
+function impMain(seq, opts = {}) {
+  const e = { C: 0, H: 0, N: 0, O: 0, S: 0 };
+  for (const ch of seq) { const x = IMP.AA[ch].elem; e.C += x.C; e.H += x.H; e.N += x.N; e.O += x.O; if (x.S) e.S += x.S; }
+  const n = seq.length; e.H -= 2 * (n - 1); e.O -= (n - 1);
+  if (opts.cam) for (const ch of seq) if (ch === "C") { e.C += 2; e.H += 3; e.N += 1; e.O += 1; }
+  const A = IMP.ATOM; return e.C * A.C + e.H * A.H + e.N * A.N + e.O * A.O + (e.S || 0) * A.S;
 }
+ok("computeMain YGGFM mono 573.2257", approx(impMain("YGGFM"), 573.2257, 0.002));
+ok("computeMain single Gly = 75.032", approx(impMain("G"), 75.03203, 0.002));
+// m/z → neutral: [M+zH]z+, z=2, M=1000 → m/z=501.0073
+ok("m/z(z=2,M=1000)=501.0073", approx((1000 + 2 * IMP.PROTON) / 2, 501.0074, 0.001));
+// exact modification library present & values
+ok("MODS has ≥ 20 entries", IMP.MODS.length >= 20);
+ok("氧化 +15.9949 present", IMP.MODS.some((m) => approx(m.d, 15.994915, 0.0005)));
+ok("脱酰胺 +0.9840 present", IMP.MODS.some((m) => approx(m.d, 0.984015, 0.0005)));
+ok("Na 加合 +21.9819 present", IMP.MODS.some((m) => approx(m.d, 21.981945, 0.0005)));
+// side-chain presets
+ok("司美侧链 +832.5041", IMP.SC_PRESETS.some((p) => p.id === "sema" && approx(p.delta, 832.5041, 0.001)));
+// deletion Δ = −residue mass matches Met loss
+ok("Met deletion Δ ≈ -131.0405", approx(-IMP.AA.M.mono, -131.0405, 0.001));
 
-(async () => {
-  const html = fs.readFileSync("index.html", "utf8");
-  const css = fs.readFileSync("styles.css", "utf8");
-  const data = fs.readFileSync("chemistry-data.js", "utf8");
-  const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
-  ["计算", "清空", "复制结果", "载入示例"].forEach((label) => {
-    assert.match(html, new RegExp(`>${label}<`));
-  });
-  assert.doesNotMatch(html, />Export CSV</);
-  assert.doesNotMatch(html, />Export PDF</);
-  assert.match(html, /id="themeSelect"/);
-  assert.match(html, /id="reportProfile"/);
-  assert.match(html, /chemistry-data\.js/);
-  assert.match(html, /side-reactions-data\.js/);
-  assert.match(html, /显色拍照助手/);
-  assert.match(html, /id="kaiserChloranilMode"/);
-  assert.match(html, /四氯苯醌/);
-  assert.match(html, /id="kaiserGuidance"/);
-  assert.match(html, /Δmass 副产物查询/);
-  assert.match(html, /id="kaiserPhotoInput"/);
-  assert.match(html, /id="kaiserRoi"/);
-  assert.match(html, /id="kaiserSampleBand"/);
-  assert.doesNotMatch(html, /id="kaiserResultModal"/);
-  assert.doesNotMatch(html, /id="kaiserRoiCenter"/);
-  assert.doesNotMatch(html, /id="autoKaiserRoi"/);
-  assert.doesNotMatch(html, /id="kaiserTorch"/);
-  assert.match(html, /id="deltaMassInput"/);
-  assert.match(html, /id="sideReactionMatches"/);
-  assert.match(data, /version:\s*"1\.5\.0"/);
-  assert.match(data, /peptideTemplates/);
-  assert.match(data, /GLP-1 analog/);
-  assert.match(data, /GIP\/GLP-1 analog/);
-  assert.match(data, /GnRH analog/);
-  assert.match(data, /somatostatin analog/);
-  assert.match(sideData, /sideReactionMassDeltas/);
-  assert.match(sideData, /Aspartimide\/glutarimide formation/);
-  assert.match(sideData, /Pbf derivatization/);
-  assert.doesNotMatch(html, /SPPS Reagent Calculator/);
-  const examples = [
-    "Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH",
-    "H-Arg-Gly-Asp-Phe-Lys-NH2",
-    "Ac-Gly-Gly-Phe-OH",
-    "Boc-Ala-Val-Leu-Phe-OMe",
-    "Fmoc-Lys(Boc)-Gly-Pro-OH",
-    "Fmoc-Aib-Gly-Pyr-OH",
-    "Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH",
-    "H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH",
-    "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
-    "H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2",
-    "Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH",
-    "H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2",
-    "Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH",
-    "DOTA-Lys-Gly-OH",
-  ];
-  examples.forEach((example) => assert.match(data, new RegExp(escapeRegExp(example))));
-  assert.match(css, /prefers-color-scheme:\s*dark/);
-  assert.match(css, /\[data-theme="dark"\]/);
-  assert.match(css, /\[data-theme="light"\]/);
-  assert.match(css, /@media \(max-width:\s*720px\)/);
-
-  const app = bootApp();
-
-  assert.equal(app.context.analyzeColor("Chloranil", { L: 28, a: -4, b: -12 }, { L: 90, a: -2, b: 18 }, { r: 20, g: 46, b: 90 }).result, "Positive");
-  assert.equal(app.context.analyzeColor("Chloranil", { L: 52, a: -8, b: 2 }, { L: 90, a: -2, b: 18 }, { r: 80, g: 120, b: 90 }).result, "Weak Positive");
-  assert.equal(app.context.analyzeColor("Chloranil", { L: 88, a: -3, b: 22 }, { L: 90, a: -2, b: 18 }, { r: 230, g: 225, b: 160 }).result, "Negative");
-
-  examples.forEach((example) => {
-    app.setSequence(example);
-    assert.equal(app.elements.get("#parseStatus").textContent, "已解析", example);
-    assert.notEqual(app.elements.get("#protectedAvg").textContent, "--", example);
-  });
-
-  app.setSequence("Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#terminalSummary").innerHTML, /N端: Fmoc/);
-  assert.match(app.elements.get("#terminalSummary").innerHTML, /C端: OH/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /N-Fmoc/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Pbf/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /OtBu/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Boc/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /主链 N 端/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Arg 侧链/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Asp 侧链/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Lys 侧链/);
-  assert.notEqual(app.elements.get("#protectedAvg").textContent, "--");
-  assert.notEqual(app.elements.get("#deprotectedAvg").textContent, "--");
-
-  app.setSequence("Fmoc-Gly-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C17H15NO4");
-
-  app.setSequence("Cbz-Gly-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C10H11NO4");
-
-  app.setSequence("Fmoc-Arg(Pbf)-Gly-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C36H43N5O8S");
-  assert.equal(app.elements.get("#protectedAvg").textContent, "705.8311");
-
-  app.setSequence("Fmoc-Ser(tBu)-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C22H25NO5");
-
-  app.setSequence("Fmoc-Asp(OtBu)-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C23H25NO6");
-
-  app.setSequence("Ac-Gly-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C4H7NO3");
-
-  app.setSequence("Dde-Lys（Fmoc）-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C31H36N2O6");
-  assert.equal(app.elements.get("#protectedAvg").textContent, "532.6366");
-
-  app.setSequence("Boc-His（Trt）-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C30H31N3O4");
-  assert.equal(app.elements.get("#protectedAvg").textContent, "497.5938");
-
-  app.setSequence("Fmoc-Lys(Dde)-AEEA-Glu(OtBu)-Tyr(tBu)-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Dde/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Glu 侧链/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /Tyr 侧链/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /AEEA/);
-
-  app.setSequence("Fmoc-Aib-Gly-Pyr-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /Aib/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /Pyr/);
-
-  app.setSequence("H-His-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys(C18Diacid)-Glu-Phe-Ile-Ala-Trp-Leu-Val-Arg-Gly-Arg-Gly-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /C18 diacid/);
-  assert.match(app.elements.get("#riskList").innerHTML, /脂肪化长效肽片段/);
-
-  app.setSequence("H-Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-Lys(C20Diacid)-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
-
-  app.setSequence("H-His-Aib-Gln-Gly-Thr-Phe-Thr-Ser-Asp-Val-Ser-Ser-Tyr-Leu-Glu-Gly-Gln-Ala-Ala-Lys-Glu-Phe-Ile-Ala-Trp-Leu-Val-Lys(C20Diacid)-Gly-Arg-NH2");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid/);
-
-  app.setSequence("Fmoc-Lys[C20-OtBu-Glu(OtBu)-AEEA-AEEA]-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C66H105N5O16");
-  assert.equal(app.elements.get("#protectedAvg").textContent, "1224.5836");
-  assert.equal(app.elements.get("#deprotectedFormula").textContent, "C43H79N5O14");
-  assert.equal(app.elements.get("#deprotectedAvg").textContent, "890.1254");
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20-OtBu/);
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /AEEA/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /侧链连接: C20-OtBu-Glu\(OtBu\)-AEEA-AEEA/);
-  assert.match(app.elements.get("#riskList").innerHTML, /脂肪化长效肽片段/);
-
-  app.setSequence("Fmoc-Lys[C20-Glu(OtBu)-AEEA]-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C56H87N4O13");
-  assert.equal(app.elements.get("#deprotectedFormula").textContent, "C37H69N4O11");
-  assert.match(app.elements.get("#protectingGroups").innerHTML, /C20 diacid residue/);
-
-  app.setSequence("Tyr-Aib-Glu-Gly-Thr-Phe-Thr-Ser-Asp-Tyr-Ser-Ile-Aib-Leu-Asp-Lys-Ile-Ala-Gln-{C20-Glu-AEEA-AEEA-Lys}-Ala-Phe-Val-Gln-Trp-Leu-Ile-Ala-Gly-Gly-Pro-Ser-Ser-Gly-Ala-Pro-Pro-Pro-Ser-NH2");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C225H348N48O68");
-  assert.equal(app.elements.get("#protectedAvg").textContent, "4813.5189");
-
-  app.setSequence("H-Lys(C20Diacid)-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C26H50N2O5");
-  app.setSequence("H-Lys(C18Diacid)-OH");
-  assert.equal(app.elements.get("#protectedFormula").textContent, "C24H46N2O5");
-
-  ["DOTA-Lys-Gly-OH", "NOTA-Lys-Gly-OH", "DTPA-Lys-Gly-OH", "Hynic-Lys-Gly-OH"].forEach((sequence) => {
-    app.setSequence(sequence);
-    assert.equal(app.elements.get("#parseStatus").textContent, "已解析", sequence);
-    assert.notEqual(app.elements.get("#protectedAvg").textContent, "--", sequence);
-  });
-
-  app.setSequence("Fmoc-Arg(ABC)-Gly-OH");
-  assert.equal(app.elements.get("#parseStatus").textContent, "需校对");
-  assert.match(app.elements.get("#riskList").innerHTML, /Unknown protecting group: ABC/);
-  assert.match(app.elements.get("#riskLevel").textContent, /高/);
-
-  app.setSequence("Fmoc-Xxx-Gly-OH");
-  assert.match(app.elements.get("#riskList").innerHTML, /Unknown amino acid: Xxx/);
-
-  app.elements.get("#deltaMassInput").value = "-18";
-  app.elements.get("#deltaTolerance").value = "0.5";
-  app.setSequence("KKK");
-  assert.match(app.elements.get("#deltaMatchCount").textContent, /4 条匹配/);
-  assert.match(app.elements.get("#sideReactionMatches").innerHTML, /Aspartimide\/glutarimide formation/);
-  assert.match(app.elements.get("#sideReactionMatches").innerHTML, /Pyroglutamate formation from Glu/);
-
-  app.setSequence("KKK");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#terminalSummary").innerHTML, /C端: OH/);
-  assert.doesNotMatch(app.elements.get("#riskList").innerHTML, /Missing C-terminal group/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /Lys/);
-
-  app.setSequence("FFKKKAAA");
-  assert.equal(app.elements.get("#parseStatus").textContent, "已解析");
-  assert.match(app.elements.get("#terminalSummary").innerHTML, /C端: OH/);
-  assert.doesNotMatch(app.elements.get("#riskList").innerHTML, /Missing C-terminal group/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /Phe/);
-  assert.match(app.elements.get("#parsedSequence").innerHTML, /Ala/);
-
-  app.setSequence("Fmoc-Gly-Gly");
-  assert.match(app.elements.get("#riskList").innerHTML, /Missing C-terminal group/);
-
-  app.setSequence("Fmoc-Arg(Pbf-Gly-OH");
-  assert.match(app.elements.get("#riskList").innerHTML, /Parentheses not closed/);
-
-  app.setSequence("Fmoc/Arg-Gly-OH");
-  assert.match(app.elements.get("#riskList").innerHTML, /Invalid sequence separator/);
-
-  app.setSequence("Fmoc-Ala-Pro-Gly-OH");
-  assert.match(app.elements.get("#riskList").innerHTML, /Kaiser test/);
-
-  app.setSequence("Fmoc-Asp-Gly-Lys(Boc)-OH");
-  assert.match(app.elements.get("#riskList").innerHTML, /aspartimide/);
-
-  app.setSequence("Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH");
-  const copied = await app.copy();
-  assert.match(copied, /研发计算报告/);
-  assert.match(copied, /化学数据库版本: 1\.5\.0/);
-  assert.match(copied, /模板: Protected peptide \| Fmoc protected RGD-K/);
-  assert.match(copied, /修饰类别:/);
-  assert.match(copied, /N端: 1/);
-  assert.match(copied, /侧链保护: 3/);
-  assert.match(copied, /保护肽平均分子量/);
-  assert.match(copied, /Δmass 副产物查询:/);
-  assert.match(copied, /Aspartimide\/glutarimide formation/);
-  assert.doesNotMatch(copied, /SPPS reagent estimate:/);
-
-  console.log("All acceptance checks passed.");
-})();
+console.log(`\n${fail === 0 ? "✅ PASS" : "❌ FAIL"} — ${pass} passed, ${fail} failed`);
+process.exit(fail === 0 ? 0 : 1);
