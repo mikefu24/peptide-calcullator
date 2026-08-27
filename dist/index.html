@@ -1,276 +1,326 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>保护肽分子量计算器</title>
-    <link rel="stylesheet" href="./styles.css?v=kaiser-lab" />
-  </head>
-  <body>
-    <main class="app-shell">
-      <header class="app-header">
-        <div>
-          <p class="kicker">多肽合成研发工具</p>
-          <h1>保护肽分子量计算器</h1>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5" />
+  <meta name="theme-color" content="#eef0f5" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="description" content="保护肽分子量计算器 · 分子量计算、Kaiser 显色检测、Δmass 分子量差异" />
+  <title>保护肽分子量计算器</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <div class="app">
+    <!-- ================= Header ================= -->
+    <header class="hero">
+      <div class="hero-lead">
+        <div class="app-icon" aria-hidden="true">
+          <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hdr-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A84FF"/><stop offset=".52" stop-color="#6E5CE6"/><stop offset="1" stop-color="#FF375F"/></linearGradient>
+              <radialGradient id="hdr-hl" cx="30%" cy="20%" r="72%"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#hdr-bg)"/>
+            <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#hdr-hl)"/>
+            <path d="M150 332 L214 214 L298 300 L362 182" fill="none" stroke="#fff" stroke-opacity=".92" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="150" cy="332" r="35" fill="#fff"/><circle cx="214" cy="214" r="30" fill="#fff" fill-opacity=".92"/><circle cx="298" cy="300" r="30" fill="#fff" fill-opacity=".92"/><circle cx="362" cy="182" r="35" fill="#fff"/>
+            <circle cx="181" cy="271" r="8" fill="#fff" fill-opacity=".6"/><circle cx="331" cy="242" r="8" fill="#fff" fill-opacity=".6"/>
+          </svg>
         </div>
-        <label class="theme-control">
-          主题
-          <select id="themeSelect">
-            <option value="system">跟随系统</option>
-            <option value="light">浅色</option>
-            <option value="dark">深色</option>
-          </select>
-        </label>
-      </header>
+        <div class="hero-titles">
+          <p class="eyebrow">多肽合成研发工具 · PEPTIDE LAB</p>
+          <h1>保护肽分子量计算器</h1>
+          <p class="subtitle">分子量计算 · Kaiser 显色检测 · Δmass 分子量差异</p>
+        </div>
+      </div>
+      <div class="hero-controls">
+        <div class="palette-picker" id="palettePicker" role="group" aria-label="配色主题">
+          <button class="pal-dot" type="button" data-pal="default" aria-label="默认配色" title="默认（多彩）"></button>
+          <button class="pal-dot" type="button" data-pal="pink" aria-label="粉色系" title="粉色系"></button>
+          <button class="pal-dot" type="button" data-pal="purple" aria-label="深紫色系" title="深紫色系"></button>
+        </div>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题"></button>
+      </div>
+    </header>
 
-      <nav class="tool-switcher" aria-label="功能模块切换">
-        <button class="tool-tab is-active" id="toolCalculator" type="button" data-tool="calculator">
-          <span>分子量计算</span>
-          <strong>分子量计算与副反应风险评估</strong>
-        </button>
-        <button class="tool-tab" id="toolKaiser" type="button" data-tool="kaiser">
-          <span>显色拍照</span>
-          <strong>茚三酮 / 四氯苯醌拍照判断</strong>
-        </button>
-        <button class="tool-tab" id="toolDelta" type="button" data-tool="delta">
-          <span>Δmass 查询</span>
-          <strong>质量差副产物查询</strong>
-        </button>
-      </nav>
-
-      <section class="calculator-layout tool-view is-active" data-tool-panel="calculator">
-        <section class="input-column" aria-label="序列输入">
-          <article class="panel input-zone primary-panel">
-            <div class="panel-head">
-              <h2>序列输入</h2>
-              <span id="parseStatus">待输入</span>
-            </div>
-            <label for="sequenceInput">保护肽序列</label>
-            <textarea id="sequenceInput" spellcheck="false">Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH</textarea>
-            <label class="example-control">
-              内置模板
-              <select id="exampleSelect"></select>
-            </label>
-            <label class="example-control compact-control">
-              报告类型
-              <select id="reportProfile">
-                <option value="rd">研发计算报告</option>
-                <option value="quote">报价估算报告</option>
-                <option value="process">工艺输入报告</option>
-              </select>
-            </label>
-            <div class="salt-controls">
-              <label>
-                盐型
-                <select id="saltType">
-                  <option value="free">游离酸 / 游离碱</option>
-                  <option value="tfa">TFA</option>
-                  <option value="hcl">HCl</option>
-                  <option value="acoh">AcOH</option>
-                </select>
-              </label>
-              <label>
-                当量
-                <input id="saltEquiv" type="number" min="0" max="20" step="0.5" value="1" />
-              </label>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-head">
-              <h2>序列解析</h2>
-              <span id="residueCount">0 个残基</span>
-            </div>
-            <div id="terminalSummary" class="terminal-summary"></div>
-            <ol id="parsedSequence" class="sequence-list"></ol>
-          </article>
-
-        </section>
-
-        <aside class="results-column" aria-label="计算结果">
-          <section class="metrics panel">
-            <article>
-              <span>保护肽平均分子量</span>
-              <strong id="protectedAvg">--</strong>
-            </article>
-            <article>
-              <span>保护肽单同位素质量</span>
-              <strong id="protectedMono">--</strong>
-            </article>
-            <article>
-              <span>脱保护肽平均分子量</span>
-              <strong id="deprotectedAvg">--</strong>
-            </article>
-            <article>
-              <span>脱保护肽单同位素质量</span>
-              <strong id="deprotectedMono">--</strong>
-            </article>
-          </section>
-
-          <section class="result-grid">
-            <article class="panel">
-              <div class="panel-head">
-                <h2>分子式</h2>
-                <span id="saltFormula">游离型</span>
+    <main>
+      <!-- ============================================================
+           MODULE 1 · 分子量计算
+      ============================================================= -->
+      <section class="view is-active" data-module="calc" aria-label="分子量计算">
+        <div class="grid-2">
+          <!-- Left column -->
+          <div class="stack">
+            <article class="card tinted">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>序列输入</h2>
+                <span class="status-chip wait" id="parseStatus"><span class="dot"></span>待输入</span>
               </div>
-              <dl class="formula-list">
-                <div>
-                  <dt>保护态</dt>
-                  <dd id="protectedFormula">--</dd>
+              <div class="field-group">
+                <label class="field-label" for="seqInput">保护肽序列</label>
+                <textarea id="seqInput" spellcheck="false" autocapitalize="off" autocomplete="off">Fmoc-Arg(Pbf)-Gly-Asp(OtBu)-Lys(Boc)-OH</textarea>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="exampleSelect">内置模板</label>
+                <select id="exampleSelect"></select>
+              </div>
+              <div class="field-group">
+                <label class="field-label">盐型与当量</label>
+                <div class="row-2 narrow-r">
+                  <select id="saltType" aria-label="盐型">
+                    <option value="free">游离酸 / 游离碱</option>
+                    <option value="tfa">TFA</option>
+                    <option value="hcl">HCl</option>
+                    <option value="acoh">AcOH</option>
+                  </select>
+                  <input id="saltEquiv" type="number" min="0" max="20" step="0.5" value="1" aria-label="盐当量" />
                 </div>
-                <div>
-                  <dt>脱保护态</dt>
-                  <dd id="deprotectedFormula">--</dd>
-                </div>
-                <div>
-                  <dt>盐型平均 / 单同位素</dt>
-                  <dd><span id="saltAvg">--</span> / <span id="saltMono">--</span></dd>
-                </div>
+              </div>
+              <div class="btn-row" style="margin-top:16px">
+                <button class="btn filled" id="btnCalc" type="button">计算</button>
+                <button class="btn tinted" id="btnExample" type="button">载入示例</button>
+                <button class="btn ghost" id="btnClear" type="button">清空</button>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M8 21H5a2 2 0 01-2-2v-3M16 21h3a2 2 0 002-2v-3"/></svg></span>序列解析</h2>
+                <span class="badge" id="residueCount">0 残基</span>
+              </div>
+              <div class="chips" id="terminalSummary" style="margin-bottom:12px"></div>
+              <ol class="seq-list" id="parsedSeq"></ol>
+            </article>
+          </div>
+
+          <!-- Right column -->
+          <div class="stack">
+            <div class="metrics">
+              <div class="metric" style="--metric-color:var(--blue)"><div class="m-label">保护肽 · 平均分子量</div><div class="m-value" id="protAvg">--</div></div>
+              <div class="metric" style="--metric-color:var(--indigo)"><div class="m-label">保护肽 · 单同位素</div><div class="m-value" id="protMono">--</div></div>
+              <div class="metric" style="--metric-color:var(--green)"><div class="m-label">脱保护肽 · 平均分子量</div><div class="m-value" id="deprotAvg">--</div></div>
+              <div class="metric" style="--metric-color:var(--teal)"><div class="m-label">脱保护肽 · 单同位素</div><div class="m-value" id="deprotMono">--</div></div>
+            </div>
+
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="7" r="2"/><circle cx="18" cy="18" r="2"/><path d="M9.7 10.3 6.5 7.4M14.2 10.6 17.2 8M13.8 13.7l3.1 3"/></svg></span>分子式与盐型</h2>
+                <span class="badge" id="saltLabel">游离型</span>
+              </div>
+              <dl class="dl">
+                <div><dt>保护态</dt><dd id="protFormula">--</dd></div>
+                <div><dt>脱保护态</dt><dd id="deprotFormula">--</dd></div>
+                <div><dt>盐型 平均 / 单同位素</dt><dd><span id="saltAvg">--</span> / <span id="saltMono">--</span></dd></div>
               </dl>
             </article>
 
-            <article class="panel">
-              <div class="panel-head">
-                <h2>保护基 / 修饰</h2>
-                <span id="protectingGroupCount">0</span>
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 8.5 12 3 3.4 8.5v7L12 21l8.6-5.5z"/><path d="M12 12v9M3.4 8.5 12 12l8.6-3.5"/></svg></span>保护基 / 修饰</h2>
+                <span class="badge" id="pgCount">0</span>
               </div>
-              <div id="protectingGroups" class="tag-cloud"></div>
+              <div class="chips" id="pgList"></div>
             </article>
 
-            <article class="panel risk-panel">
-              <div class="panel-head">
-                <h2>合成风险</h2>
-                <span id="riskLevel">--</span>
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></span>合成风险</h2>
+                <span class="risk-level" id="riskLevel" data-lv="Low">低</span>
               </div>
-              <ul id="riskList" class="risk-list"></ul>
+              <ul class="risk-list" id="riskList"></ul>
             </article>
 
-            <article class="panel report-panel">
-              <div class="panel-head">
-                <h2>报告预览</h2>
-                <span id="copyState">未复制</span>
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l2 4v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7z"/><path d="M9 3v4h6"/></svg></span>报告预览</h2>
+                <button class="btn tinted sm" id="btnCopy" type="button">复制报告</button>
               </div>
-              <pre id="reportText"></pre>
+              <pre class="report" id="reportText"></pre>
             </article>
-          </section>
-        </aside>
+          </div>
+        </div>
       </section>
 
-      <section class="kaiser-module tool-view" data-tool-panel="kaiser" aria-label="茚三酮拍照显色判断">
-        <article class="panel">
-          <div class="panel-head">
-            <h2>显色拍照助手</h2>
-            <span id="kaiserCameraState">相机待启动</span>
+      <!-- ============================================================
+           MODULE 2 · Kaiser 显色检测
+      ============================================================= -->
+      <section class="view" data-module="kaiser" aria-label="Kaiser 显色检测">
+        <div class="grid-2">
+          <div class="stack">
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3z"/><circle cx="12" cy="13" r="4"/></svg></span>显色拍照</h2>
+                <span class="badge" id="kaiserState">相机待启动</span>
+              </div>
+              <div class="segmented" id="kaiserSeg" role="tablist" aria-label="显色检测模式">
+                <span class="seg-thumb"></span>
+                <button class="seg is-active" type="button" data-mode="Standard">标准 · 一级胺</button>
+                <button class="seg" type="button" data-mode="Pro">脯氨酸</button>
+                <button class="seg" type="button" data-mode="Chloranil">四氯苯醌</button>
+              </div>
+              <div class="kaiser-stage" style="margin-top:14px">
+                <video id="kaiserVideo" playsinline muted></video>
+                <canvas id="kaiserCanvas" width="720" height="420"></canvas>
+                <div class="kaiser-roi" id="kaiserRoi" role="application" aria-label="可拖动取样框">
+                  <span class="band" id="kaiserBand"></span><i class="grip"></i>
+                </div>
+                <p class="kaiser-hint">试管放入框内 · 可拖动白框或虚线取样区微调</p>
+              </div>
+              <div class="btn-row" style="margin-top:14px">
+                <button class="btn filled" id="btnKaiserStart" type="button">开启相机</button>
+                <button class="btn tinted" id="btnKaiserCapture" type="button">拍照分析</button>
+                <button class="btn ghost" id="btnKaiserBlank" type="button">设为空白</button>
+              </div>
+              <div class="btn-row" style="margin-top:10px">
+                <label class="kaiser-toggle"><input id="kaiserHeatmap" type="checkbox" />拍照后伪热图</label>
+                <label class="btn ghost file-btn">导入照片<input id="kaiserPhoto" type="file" accept="image/*" capture="environment" /></label>
+              </div>
+            </article>
           </div>
-          <div class="kaiser-tool">
-            <div class="segmented-control" role="tablist" aria-label="显色检测模式">
-              <button class="segment is-active" id="kaiserStandardMode" type="button">标准</button>
-              <button class="segment" id="kaiserProMode" type="button">脯氨酸</button>
-              <button class="segment" id="kaiserChloranilMode" type="button">四氯苯醌</button>
-            </div>
-            <div class="kaiser-camera">
-              <video id="kaiserVideo" playsinline muted></video>
-              <canvas id="kaiserCanvas" width="720" height="420"></canvas>
-              <div class="kaiser-roi" id="kaiserRoi" aria-label="可拖动取样框" role="application"><span id="kaiserSampleBand"></span><i></i></div>
-              <p class="kaiser-camera-hint">将试管放入框内；可直接拖动白色框或虚线树脂区微调</p>
-            </div>
-            <div class="kaiser-actions">
-              <button class="button primary" id="startKaiserCamera" type="button">开启相机</button>
-              <button class="button primary" id="captureKaiserPhoto" type="button">拍照分析</button>
-              <button class="button" id="setKaiserBlank" type="button">设置空白</button>
-              <label class="kaiser-toggle">
-                <input id="kaiserHeatmapToggle" type="checkbox" />
-                拍照后伪热图
-              </label>
-              <label class="button">
-                导入照片
-                <input id="kaiserPhotoInput" type="file" accept="image/*" capture="environment" />
-              </label>
-            </div>
-          </div>
-        </article>
 
-        <article class="panel">
-          <div class="panel-head">
-            <h2>显色分析结果</h2>
-            <span>CIELAB / 色差 ΔE</span>
-          </div>
-          <div class="kaiser-readout">
-            <article class="kaiser-status-card">
-              <span>判定结果</span>
-              <strong id="kaiserStatus">阴性</strong>
+          <div class="stack">
+            <article class="card">
+              <div class="card-head">
+                <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></span>显色分析结果</h2>
+                <span class="badge">CIELAB · ΔE</span>
+              </div>
+              <div class="kaiser-readout">
+                <div class="kaiser-verdict" id="kaiserVerdict" data-result="Negative">
+                  <div class="v-badge" id="kaiserResultText">阴性</div>
+                  <div class="v-meta">
+                    <div class="v-score" id="kaiserScore">0%</div>
+                    <div class="v-scale"><span>阴性</span><span>阳性</span></div>
+                    <div class="v-track"><div class="v-fill" id="kaiserFill"></div></div>
+                  </div>
+                </div>
+                <div class="kaiser-lab-grid">
+                  <div class="cell"><span>采样区 Lab</span><b id="kaiserCurLab">--</b></div>
+                  <div class="cell"><span>空白 Lab</span><b id="kaiserBlankLab">--</b></div>
+                  <div class="cell"><span>色差 ΔE</span><b id="kaiserDeltaE">--</b></div>
+                </div>
+                <div class="kaiser-guidance" id="kaiserGuidance">正常：未见明显游离胺显色，可结合实际颜色继续判断。</div>
+              </div>
             </article>
-            <article>
-              <span>阳性强度</span>
-              <div class="kaiser-scale"><span>阴性</span><span>阳性</span></div>
-              <div class="progress-track"><div id="kaiserProgress" class="progress-fill"></div></div>
-              <strong id="kaiserScore">0%</strong>
-            </article>
-            <article><span>采样区 Lab</span><strong id="kaiserCurrentLab">--</strong></article>
-            <article><span>空白 Lab</span><strong id="kaiserBlankLab">--</strong></article>
-            <article><span>色差 ΔE</span><strong id="kaiserDeltaE">--</strong></article>
-            <article class="kaiser-guidance-card"><span>实验建议</span><strong id="kaiserGuidance">正常：未见明显游离胺显色，可结合实际颜色继续判断。</strong></article>
           </div>
-        </article>
+        </div>
       </section>
 
-      <section class="delta-module tool-view" data-tool-panel="delta" aria-label="分子量差值副产物查询">
-        <article class="panel">
-          <div class="panel-head">
-            <h2>Δmass 副产物查询</h2>
-            <span id="deltaMatchCount">0 条匹配</span>
-          </div>
-          <div class="delta-controls">
-            <label>
-              Δmass (Da)
-              <input id="deltaMassInput" type="number" step="0.01" value="-18" />
-            </label>
-            <label>
-              允许误差
-              <input id="deltaTolerance" type="number" min="0" step="0.1" value="0.5" />
-            </label>
-          </div>
-        </article>
+      <!-- ============================================================
+           MODULE 3 · Δmass 分子量差异 · 杂质推测
+      ============================================================= -->
+      <section class="view" data-module="delta" aria-label="Δmass 分子量差异">
+        <div class="stack" style="max-width:760px;margin:0 auto">
+          <article class="card tinted">
+            <div class="card-head">
+              <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M7 12h10M10 17h4"/><circle cx="12" cy="12" r="10"/></svg></span>输入分子量差值</h2>
+              <span class="badge" id="deltaCount">0 条匹配</span>
+            </div>
 
-        <article class="panel side-reaction-panel">
-          <div class="panel-head">
-            <h2>匹配副产物</h2>
-            <span>平均质量差</span>
-          </div>
-          <div id="sideReactionMatches" class="side-reaction-list"></div>
-        </article>
+            <div class="segmented" id="deltaMode" role="tablist" aria-label="输入方式">
+              <span class="seg-thumb"></span>
+              <button class="seg is-active" type="button" data-dmode="delta">直接输入 Δ</button>
+              <button class="seg" type="button" data-dmode="mz">由实测 m/z</button>
+            </div>
+
+            <div id="paneDelta" style="margin-top:14px">
+              <div class="delta-input-wrap">
+                <div class="field-group big-num-field">
+                  <label class="field-label" for="deltaInput">Δmass (Da) · 实测 − 理论</label>
+                  <input id="deltaInput" type="number" step="0.0001" value="-18" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="deltaTol">允许误差 (± Da)</label>
+                  <input id="deltaTol" type="number" min="0" step="0.1" value="0.5" style="min-height:74px;font-size:22px;text-align:center;font-weight:600" />
+                </div>
+              </div>
+            </div>
+
+            <div id="paneMz" hidden style="margin-top:14px">
+              <div class="row-2">
+                <div class="field-group"><label class="field-label" for="mzInput">杂质 m/z（带电离子）</label><input id="mzInput" type="number" step="0.0001" placeholder="如 503.756" /></div>
+                <div class="field-group"><label class="field-label" for="zInput">电荷数 z</label><input id="zInput" type="number" step="1" min="1" value="2" /></div>
+              </div>
+              <div class="derived-delta" id="derivedDelta"></div>
+            </div>
+
+            <details class="seq-panel" id="seqPanel">
+              <summary>主成分序列（可选）· 启用缺失 / 插入 / 错配与位点判断</summary>
+              <div class="seq-panel-body">
+                <div class="field-group">
+                  <label class="field-label" for="impSeq">序列（单字母；U = Aib；自动忽略空格/换行）</label>
+                  <textarea id="impSeq" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="如 CMETNLRK 或 HUEGTFTSDVSSYLEG..." style="min-height:66px"></textarea>
+                </div>
+                <div class="opts-grid">
+                  <div class="field-group"><label class="field-label" for="impNterm">N 端</label><select id="impNterm"><option value="free">游离 NH₂</option><option value="acetyl">乙酰化 Ac-</option></select></div>
+                  <div class="field-group"><label class="field-label" for="impCterm">C 端</label><select id="impCterm"><option value="free">游离 COOH</option><option value="amide">酰胺 -NH₂</option></select></div>
+                  <div class="field-group"><label class="field-label" for="impSS">二硫键数</label><select id="impSS"><option>0</option><option>1</option><option>2</option><option>3</option></select></div>
+                  <div class="field-group"><label class="field-label" for="impCam">Cys</label><select id="impCam"><option value="no">游离 -SH</option><option value="yes">Cam (+57)</option></select></div>
+                  <div class="field-group"><label class="field-label" for="impSC">脂质 / 侧链修饰</label><select id="impSC"></select></div>
+                  <div class="field-group"><label class="field-label" for="impMaxK">缺失/插入残基上限</label><select id="impMaxK"><option>1</option><option selected>2</option><option>3</option></select></div>
+                </div>
+                <div class="row-2" style="margin-top:10px">
+                  <div class="field-group"><label class="field-label" for="tolPpm">ppm 容差（有序列时启用）</label><input id="tolPpm" type="number" step="1" min="0" value="20" /></div>
+                  <div class="field-group"><label class="field-label">&nbsp;</label><button class="btn ghost" id="impDemo" type="button" style="min-height:46px">载入司美示例</button></div>
+                </div>
+              </div>
+            </details>
+
+            <div class="field-group" style="margin-top:14px">
+              <label class="field-label">常见差值速选</label>
+              <div class="delta-quick" id="deltaQuick"></div>
+            </div>
+          </article>
+
+          <article class="card" id="mainStatsCard" hidden>
+            <div class="card-head">
+              <h2><span class="head-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>主成分解析</h2>
+              <span class="badge" id="mainFormula">--</span>
+            </div>
+            <div class="stat-strip" id="mainStats"></div>
+            <div class="derived-line" id="deltaDerivedLine"></div>
+          </article>
+
+          <div id="deltaResults"></div>
+
+          <p class="footnote">精确修饰按<b>单同位素</b>质量匹配；副反应库为<b>名义质量偏差</b>（共 82 条，来自 <a href="https://shop.elsevier.com/books/side-reactions-in-peptide-synthesis/yang/978-0-12-801009-9" target="_blank" rel="noopener">《Side Reactions in Peptide Synthesis》Yang, Y., 2016 附录 I</a>）。结果仅作杂质排查线索，需结合保留时间 / MS² / 标准品确证。</p>
+        </div>
       </section>
-
-      <footer class="action-bar tool-view is-active" data-tool-panel="calculator" aria-label="操作按钮">
-        <button class="button primary" id="calculateButton" type="button">计算</button>
-        <button class="button" id="clearButton" type="button">清空</button>
-        <button class="button" id="copyReport" type="button">复制结果</button>
-        <button class="button" id="loadExample" type="button">载入示例</button>
-      </footer>
     </main>
+  </div>
 
-    <script>
-      (() => {
-        const activateTool = (tool) => {
-          document.querySelectorAll("[data-tool]").forEach((tab) => {
-            const active = tab.dataset.tool === tool;
-            tab.classList.toggle("is-active", active);
-            if (tab.setAttribute) tab.setAttribute("aria-pressed", String(active));
-          });
-          document.querySelectorAll("[data-tool-panel]").forEach((panel) => {
-            panel.classList.toggle("is-active", panel.dataset.toolPanel === tool);
-          });
-        };
+  <!-- ================= Tab bar ================= -->
+  <nav class="tabbar" role="tablist" aria-label="功能模块">
+    <button class="tab is-active" type="button" data-module="calc" role="tab" style="--tab-color:var(--blue)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h4M8 15h2M12 15h4"/></svg>
+      <span class="tab-label">分子量</span>
+    </button>
+    <button class="tab" type="button" data-module="kaiser" role="tab" style="--tab-color:var(--orange)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3l2 2-8.5 8.5-2-2z"/><path d="M10.5 11.5 4 18a2.8 2.8 0 004 4l6.5-6.5"/><path d="M6 16l2 2"/></svg>
+      <span class="tab-label">显色检测</span>
+    </button>
+    <button class="tab" type="button" data-module="delta" role="tab" style="--tab-color:var(--purple)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 4 19h16z"/><path d="M8.5 14h7"/></svg>
+      <span class="tab-label">Δmass</span>
+    </button>
+  </nav>
 
-        window.activatePeptideTool = activateTool;
-        document.querySelectorAll("[data-tool]").forEach((tab) => {
-          tab.addEventListener("click", () => activateTool(tab.dataset.tool || "calculator"));
-        });
-        activateTool("calculator");
-      })();
-    </script>
-    <script src="./chemistry-data.js?v=kaiser-lab"></script>
-    <script src="./side-reactions-data.js?v=kaiser-lab"></script>
-    <script src="./app.js?v=kaiser-lab"></script>
-  </body>
+  <div class="toast" id="toast"></div>
+
+  <!-- ================= Detail sheet ================= -->
+  <div class="sheet-scrim" id="sheetScrim"></div>
+  <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="副产物机理详情">
+    <div class="sheet-grab" id="sheetGrab" aria-label="下拉关闭"></div>
+    <div id="sheetContent"></div>
+  </aside>
+
+  <script src="./chemistry-data.js"></script>
+  <script src="./side-reactions-data.js"></script>
+  <script src="./impurity-data.js"></script>
+  <script src="./mechanism-animations.js"></script>
+  <script src="./app.js"></script>
+</body>
 </html>

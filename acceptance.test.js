@@ -63,13 +63,22 @@ ok("all deltas finite numbers", badDelta === 0);
 ok("delta range -98..265", Math.min(...SR.records.map(r => r.deltaAvg)) === -98 && Math.max(...SR.records.map(r => r.deltaAvg)) === 265);
 ok("source cites the book", /Side Reactions in Peptide Synthesis/.test(SR.source) && /2016/.test(SR.source));
 ok("9 mechanism archetypes", Object.keys(SR.archetypes).length === 9, `got ${Object.keys(SR.archetypes).length}`);
+ok("amino acid insertion/deletion delta library present", SR.aminoAcidResidueMassDeltas.length >= 38);
+ok("+Ala insertion lookup data", SR.aminoAcidResidueMassDeltas.some((r) => r.nameZh.includes("多余 Ala") && approx(r.deltaAvg, 71.08, 0.001)));
+ok("-Ala deletion lookup data", SR.aminoAcidResidueMassDeltas.some((r) => r.nameZh.includes("缺失 Ala") && approx(r.deltaAvg, -71.08, 0.001)));
 
 console.log("── 6. Δmass 查询逻辑 ────────────────────────────────────────");
 function lookup(q, tol) { return SR.records.filter(r => Math.abs(r.deltaAvg - q) <= tol); }
+function residueLookup(q, tol) {
+  return SR.aminoAcidResidueMassDeltas.filter((r) => Math.min(Math.abs(r.deltaAvg - q), Math.abs(r.deltaMono - q)) <= tol);
+}
 ok("−18 within ±0.5 → 4 matches", lookup(-18, 0.5).length === 4, `got ${lookup(-18, 0.5).length}`);
 ok("+16 within ±0.5 → 4 matches", lookup(16, 0.5).length === 4, `got ${lookup(16, 0.5).length}`);
 ok("+252 (Pbf) within ±0.5 → ≥1", lookup(252, 0.5).length >= 1);
 ok("+9999 → 0 matches", lookup(9999, 0.5).length === 0);
+ok("+71.08 → Ala insertion residue match", residueLookup(71.08, 0.05).some((r) => r.nameZh.includes("多余 Ala")));
+ok("-71.08 → Ala deletion residue match", residueLookup(-71.08, 0.05).some((r) => r.nameZh.includes("缺失 Ala")));
+ok("+147.068 → Phe insertion mono match", residueLookup(147.068, 0.01).some((r) => r.nameZh.includes("多余 Phe")));
 
 console.log("── 7. 杂质分析引擎 (impurity-data + m/z) ────────────────────");
 // single-letter residue monos match Expasy

@@ -16,6 +16,7 @@
 
   const SR = globalThis.PeptideSideReactionData || {};
   const sideRecords = SR.records || [];
+  const residueDeltaRecords = SR.aminoAcidResidueMassDeltas || [];
   const archetypes = SR.archetypes || {};
   const SR_SOURCE = SR.source || "";
   const SR_SOURCE_SHORT = SR.sourceShort || "";
@@ -498,6 +499,15 @@
       </span>
       <span class="match-chev">${CHEV}</span></button>`;
   }
+  function residueDeltaHit(item, delta) {
+    const avgError = Math.abs(item.deltaAvg - delta);
+    const monoError = Number.isFinite(item.deltaMono) ? Math.abs(item.deltaMono - delta) : Infinity;
+    return {
+      ...item,
+      err: Math.min(avgError, monoError),
+      matchedMassType: monoError < avgError ? "单同位素质量" : "平均质量",
+    };
+  }
 
   function renderDelta() {
     const st = computeDelta();
@@ -548,6 +558,14 @@
     total += rx.length;
     sections.push(sectionCard("副反应库 · 机理动画", `${sideRecords.length} 条`,
       rx.length ? rx.map((r) => matchCardHTML(r, st.hasSeq ? rxSite(r, st.seq) : null)).join("") : emptyRow(`±${fixed2(nomTol)} Da 内无副反应匹配`), "rich"));
+
+    // amino-acid residue insertion/deletion lookup, independent of sequence input
+    const residueHits = residueDeltaRecords.map((r) => residueDeltaHit(r, delta))
+      .filter((r) => Math.abs(r.err) <= tolDa)
+      .sort((a, b) => Math.abs(a.err) - Math.abs(b.err) || a.deltaAvg - b.deltaAvg);
+    total += residueHits.length;
+    sections.push(sectionCard("氨基酸残基插入 / 缺失", `${residueHits.length}`,
+      residueHits.length ? residueHits.map((r) => impRow(r.deltaAvg, r.nameZh, `${r.category} · ${r.matchedMassType}命中 · Mono ${r.deltaMono >= 0 ? "+" : ""}${r.deltaMono.toFixed(6)} Da`, r.err, st.mainMass, null, r.dir === "dec" ? "var(--red)" : "var(--green)")).join("") : emptyRow("容差内无氨基酸残基插入/缺失匹配")));
 
     // B. exact modifications / adducts
     const mods = IMP.MODS.map((m) => ({ ...m, err: delta - m.d })).filter((m) => within(m.err, tolDa, st.mainMass, tolPpm)).sort((a, b) => Math.abs(a.err) - Math.abs(b.err));

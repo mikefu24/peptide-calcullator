@@ -129,18 +129,6 @@ const groupSiteTypes = {
   chelator: new Set(["DOTA", "NOTA", "DTPA", "Hynic", "HYNIC"]),
   salt: new Set(Object.keys(salts)),
 };
-const sppsReagents = {
-  resin: { label: "Resin", unit: "g", defaultPrice: 120 },
-  "Fmoc-AA-OH": { label: "Fmoc-AA-OH pool", mw: 350, unit: "g", defaultPrice: 260 },
-  DIC: { label: "DIC", mw: 126.2, density: 0.815, unit: "mL", defaultPrice: 0.35 },
-  HOBt: { label: "HOBt", mw: 135.13, unit: "g", defaultPrice: 120 },
-  Oxyma: { label: "Oxyma Pure", mw: 142.11, unit: "g", defaultPrice: 90 },
-  PyBOP: { label: "PyBOP", mw: 520.39, unit: "g", defaultPrice: 320 },
-  DIEA: { label: "DIEA", mw: 129.25, density: 0.742, unit: "mL", defaultPrice: 0.28 },
-  Piperidine: { label: "20% piperidine/DMF", unit: "mL", defaultPrice: 0.08 },
-  DMF: { label: "DMF wash/coupling solvent", unit: "mL", defaultPrice: 0.03 },
-  "TFA cocktail": { label: "TFA cleavage cocktail", unit: "mL", defaultPrice: 0.18 },
-};
 const chemistryLibrary = {
   version: "1.5.0",
   atomMass,
@@ -148,7 +136,6 @@ const chemistryLibrary = {
   groups,
   terminalGroups,
   salts,
-  sppsReagents,
   templates: peptideTemplates,
   categories: {
     residues: ["canonical amino acid", "special amino acid", "linker residue"],
@@ -157,12 +144,6 @@ const chemistryLibrary = {
   },
   siteTypes: groupSiteTypes,
 };
-const reportProfiles = {
-  rd: "研发计算报告",
-  quote: "报价估算报告",
-  process: "工艺输入报告",
-};
-
 
 globalThis.PeptideChemistryData = {
   atomMass,
@@ -177,8 +158,6 @@ globalThis.PeptideChemistryData = {
   builtInExamples,
   groupSiteTypes,
   chemistryLibrary,
-  reportProfiles,
-  sppsReagents,
 };
 
 })();

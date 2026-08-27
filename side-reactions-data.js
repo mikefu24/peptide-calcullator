@@ -5,6 +5,48 @@
 const SOURCE = "Yang, Y. 《Side Reactions in Peptide Synthesis》(多肽合成中的副反应), 1st ed.; Academic Press (Elsevier), 2016, Appendix I. ISBN 978-0-12-801009-9.";
 const SOURCE_SHORT = "Side Reactions in Peptide Synthesis (Yang, 2016) · Appendix I";
 const SOURCE_URL = "https://shop.elsevier.com/books/side-reactions-in-peptide-synthesis/yang/978-0-12-801009-9";
+const RESIDUE_SOURCE = "氨基酸基础知识.xls + app residue formula library; residue mass equals amino acid minus H2O";
+
+const aminoAcidResidueMassDeltas = [
+  { deltaAvg: 57.05, deltaMono: 57.021464, dir: "inc", nameZh: "多余 Gly 残基（插入杂质，+Gly / +G）", nameEn: "Extra Gly residue insertion impurity", category: "氨基酸插入杂质", residues: ["Gly", "G"], source: RESIDUE_SOURCE },
+  { deltaAvg: -57.05, deltaMono: -57.021464, dir: "dec", nameZh: "缺失 Gly 残基（缺失杂质，-Gly / -G）", nameEn: "Missing Gly residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Gly", "G"], source: RESIDUE_SOURCE },
+  { deltaAvg: 71.08, deltaMono: 71.037114, dir: "inc", nameZh: "多余 Ala 残基（插入杂质，+Ala / +A）", nameEn: "Extra Ala residue insertion impurity", category: "氨基酸插入杂质", residues: ["Ala", "A"], source: RESIDUE_SOURCE },
+  { deltaAvg: -71.08, deltaMono: -71.037114, dir: "dec", nameZh: "缺失 Ala 残基（缺失杂质，-Ala / -A）", nameEn: "Missing Ala residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Ala", "A"], source: RESIDUE_SOURCE },
+  { deltaAvg: 87.08, deltaMono: 87.032029, dir: "inc", nameZh: "多余 Ser 残基（插入杂质，+Ser / +S）", nameEn: "Extra Ser residue insertion impurity", category: "氨基酸插入杂质", residues: ["Ser", "S"], source: RESIDUE_SOURCE },
+  { deltaAvg: -87.08, deltaMono: -87.032029, dir: "dec", nameZh: "缺失 Ser 残基（缺失杂质，-Ser / -S）", nameEn: "Missing Ser residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Ser", "S"], source: RESIDUE_SOURCE },
+  { deltaAvg: 97.12, deltaMono: 97.052764, dir: "inc", nameZh: "多余 Pro 残基（插入杂质，+Pro / +P）", nameEn: "Extra Pro residue insertion impurity", category: "氨基酸插入杂质", residues: ["Pro", "P"], source: RESIDUE_SOURCE },
+  { deltaAvg: -97.12, deltaMono: -97.052764, dir: "dec", nameZh: "缺失 Pro 残基（缺失杂质，-Pro / -P）", nameEn: "Missing Pro residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Pro", "P"], source: RESIDUE_SOURCE },
+  { deltaAvg: 99.13, deltaMono: 99.068414, dir: "inc", nameZh: "多余 Val 残基（插入杂质，+Val / +V）", nameEn: "Extra Val residue insertion impurity", category: "氨基酸插入杂质", residues: ["Val", "V"], source: RESIDUE_SOURCE },
+  { deltaAvg: -99.13, deltaMono: -99.068414, dir: "dec", nameZh: "缺失 Val 残基（缺失杂质，-Val / -V）", nameEn: "Missing Val residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Val", "V"], source: RESIDUE_SOURCE },
+  { deltaAvg: 101.10, deltaMono: 101.047679, dir: "inc", nameZh: "多余 Thr 残基（插入杂质，+Thr / +T）", nameEn: "Extra Thr residue insertion impurity", category: "氨基酸插入杂质", residues: ["Thr", "T"], source: RESIDUE_SOURCE },
+  { deltaAvg: -101.10, deltaMono: -101.047679, dir: "dec", nameZh: "缺失 Thr 残基（缺失杂质，-Thr / -T）", nameEn: "Missing Thr residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Thr", "T"], source: RESIDUE_SOURCE },
+  { deltaAvg: 103.14, deltaMono: 103.009185, dir: "inc", nameZh: "多余 Cys 残基（插入杂质，+Cys / +C）", nameEn: "Extra Cys residue insertion impurity", category: "氨基酸插入杂质", residues: ["Cys", "C"], source: RESIDUE_SOURCE },
+  { deltaAvg: -103.14, deltaMono: -103.009185, dir: "dec", nameZh: "缺失 Cys 残基（缺失杂质，-Cys / -C）", nameEn: "Missing Cys residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Cys", "C"], source: RESIDUE_SOURCE },
+  { deltaAvg: 113.16, deltaMono: 113.084064, dir: "inc", nameZh: "多余 Leu/Ile 残基（插入杂质，+Leu/+Ile / +L/+I）", nameEn: "Extra Leu/Ile residue insertion impurity", category: "氨基酸插入杂质", residues: ["Leu", "Ile", "L", "I"], source: RESIDUE_SOURCE },
+  { deltaAvg: -113.16, deltaMono: -113.084064, dir: "dec", nameZh: "缺失 Leu/Ile 残基（缺失杂质，-Leu/-Ile / -L/-I）", nameEn: "Missing Leu/Ile residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Leu", "Ile", "L", "I"], source: RESIDUE_SOURCE },
+  { deltaAvg: 114.10, deltaMono: 114.042928, dir: "inc", nameZh: "多余 Asn 残基（插入杂质，+Asn / +N）", nameEn: "Extra Asn residue insertion impurity", category: "氨基酸插入杂质", residues: ["Asn", "N"], source: RESIDUE_SOURCE },
+  { deltaAvg: -114.10, deltaMono: -114.042928, dir: "dec", nameZh: "缺失 Asn 残基（缺失杂质，-Asn / -N）", nameEn: "Missing Asn residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Asn", "N"], source: RESIDUE_SOURCE },
+  { deltaAvg: 115.09, deltaMono: 115.026943, dir: "inc", nameZh: "多余 Asp 残基（插入杂质，+Asp / +D）", nameEn: "Extra Asp residue insertion impurity", category: "氨基酸插入杂质", residues: ["Asp", "D"], source: RESIDUE_SOURCE },
+  { deltaAvg: -115.09, deltaMono: -115.026943, dir: "dec", nameZh: "缺失 Asp 残基（缺失杂质，-Asp / -D）", nameEn: "Missing Asp residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Asp", "D"], source: RESIDUE_SOURCE },
+  { deltaAvg: 128.13, deltaMono: 128.058578, dir: "inc", nameZh: "多余 Gln 残基（插入杂质，+Gln / +Q）", nameEn: "Extra Gln residue insertion impurity", category: "氨基酸插入杂质", residues: ["Gln", "Q"], source: RESIDUE_SOURCE },
+  { deltaAvg: -128.13, deltaMono: -128.058578, dir: "dec", nameZh: "缺失 Gln 残基（缺失杂质，-Gln / -Q）", nameEn: "Missing Gln residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Gln", "Q"], source: RESIDUE_SOURCE },
+  { deltaAvg: 128.17, deltaMono: 128.094963, dir: "inc", nameZh: "多余 Lys 残基（插入杂质，+Lys / +K）", nameEn: "Extra Lys residue insertion impurity", category: "氨基酸插入杂质", residues: ["Lys", "K"], source: RESIDUE_SOURCE },
+  { deltaAvg: -128.17, deltaMono: -128.094963, dir: "dec", nameZh: "缺失 Lys 残基（缺失杂质，-Lys / -K）", nameEn: "Missing Lys residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Lys", "K"], source: RESIDUE_SOURCE },
+  { deltaAvg: 129.11, deltaMono: 129.042593, dir: "inc", nameZh: "多余 Glu 残基（插入杂质，+Glu / +E）", nameEn: "Extra Glu residue insertion impurity", category: "氨基酸插入杂质", residues: ["Glu", "E"], source: RESIDUE_SOURCE },
+  { deltaAvg: -129.11, deltaMono: -129.042593, dir: "dec", nameZh: "缺失 Glu 残基（缺失杂质，-Glu / -E）", nameEn: "Missing Glu residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Glu", "E"], source: RESIDUE_SOURCE },
+  { deltaAvg: 131.20, deltaMono: 131.040485, dir: "inc", nameZh: "多余 Met 残基（插入杂质，+Met / +M）", nameEn: "Extra Met residue insertion impurity", category: "氨基酸插入杂质", residues: ["Met", "M"], source: RESIDUE_SOURCE },
+  { deltaAvg: -131.20, deltaMono: -131.040485, dir: "dec", nameZh: "缺失 Met 残基（缺失杂质，-Met / -M）", nameEn: "Missing Met residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Met", "M"], source: RESIDUE_SOURCE },
+  { deltaAvg: 137.14, deltaMono: 137.058912, dir: "inc", nameZh: "多余 His 残基（插入杂质，+His / +H）", nameEn: "Extra His residue insertion impurity", category: "氨基酸插入杂质", residues: ["His", "H"], source: RESIDUE_SOURCE },
+  { deltaAvg: -137.14, deltaMono: -137.058912, dir: "dec", nameZh: "缺失 His 残基（缺失杂质，-His / -H）", nameEn: "Missing His residue deletion impurity", category: "氨基酸缺失杂质", residues: ["His", "H"], source: RESIDUE_SOURCE },
+  { deltaAvg: 147.17, deltaMono: 147.068414, dir: "inc", nameZh: "多余 Phe 残基（插入杂质，+Phe / +F）", nameEn: "Extra Phe residue insertion impurity", category: "氨基酸插入杂质", residues: ["Phe", "F"], source: RESIDUE_SOURCE },
+  { deltaAvg: -147.17, deltaMono: -147.068414, dir: "dec", nameZh: "缺失 Phe 残基（缺失杂质，-Phe / -F）", nameEn: "Missing Phe residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Phe", "F"], source: RESIDUE_SOURCE },
+  { deltaAvg: 156.19, deltaMono: 156.101111, dir: "inc", nameZh: "多余 Arg 残基（插入杂质，+Arg / +R）", nameEn: "Extra Arg residue insertion impurity", category: "氨基酸插入杂质", residues: ["Arg", "R"], source: RESIDUE_SOURCE },
+  { deltaAvg: -156.19, deltaMono: -156.101111, dir: "dec", nameZh: "缺失 Arg 残基（缺失杂质，-Arg / -R）", nameEn: "Missing Arg residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Arg", "R"], source: RESIDUE_SOURCE },
+  { deltaAvg: 163.17, deltaMono: 163.063329, dir: "inc", nameZh: "多余 Tyr 残基（插入杂质，+Tyr / +Y）", nameEn: "Extra Tyr residue insertion impurity", category: "氨基酸插入杂质", residues: ["Tyr", "Y"], source: RESIDUE_SOURCE },
+  { deltaAvg: -163.17, deltaMono: -163.063329, dir: "dec", nameZh: "缺失 Tyr 残基（缺失杂质，-Tyr / -Y）", nameEn: "Missing Tyr residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Tyr", "Y"], source: RESIDUE_SOURCE },
+  { deltaAvg: 186.21, deltaMono: 186.079313, dir: "inc", nameZh: "多余 Trp 残基（插入杂质，+Trp / +W）", nameEn: "Extra Trp residue insertion impurity", category: "氨基酸插入杂质", residues: ["Trp", "W"], source: RESIDUE_SOURCE },
+  { deltaAvg: -186.21, deltaMono: -186.079313, dir: "dec", nameZh: "缺失 Trp 残基（缺失杂质，-Trp / -W）", nameEn: "Missing Trp residue deletion impurity", category: "氨基酸缺失杂质", residues: ["Trp", "W"], source: RESIDUE_SOURCE },
+];
 
 // 反应机理原型（每一类驱动一套动画） Mechanism archetypes (each drives an animation)
 const archetypes = {
@@ -106,7 +148,10 @@ const records = [
 ];
 
 // 向后兼容的精简数组 backward-compatible flat array
-const sideReactionMassDeltas = records.map((r) => ({ deltaAvg: r.deltaAvg, modification: r.nameEn, category: r.mech, residues: r.residues, source: SOURCE_SHORT }));
+const sideReactionMassDeltas = [
+  ...aminoAcidResidueMassDeltas.map((r) => ({ deltaAvg: r.deltaAvg, deltaMono: r.deltaMono, modification: r.nameEn, category: r.category, residues: r.residues, source: r.source })),
+  ...records.map((r) => ({ deltaAvg: r.deltaAvg, modification: r.nameEn, category: r.mech, residues: r.residues, source: SOURCE_SHORT })),
+];
 
 globalThis.PeptideSideReactionData = {
   version: '2.0.0',
@@ -114,6 +159,7 @@ globalThis.PeptideSideReactionData = {
   sourceShort: SOURCE_SHORT,
   sourceUrl: SOURCE_URL,
   count: records.length,
+  aminoAcidResidueMassDeltas,
   archetypes,
   records,
   sideReactionMassDeltas,

@@ -11,6 +11,9 @@ for (const file of requiredFiles) {
 
 execFileSync(process.execPath, ["--check", "app.js"], { stdio: "inherit" });
 execFileSync(process.execPath, ["--check", "chemistry-data.js"], { stdio: "inherit" });
+execFileSync(process.execPath, ["--check", "side-reactions-data.js"], { stdio: "inherit" });
+execFileSync(process.execPath, ["--check", "impurity-data.js"], { stdio: "inherit" });
+execFileSync(process.execPath, ["--check", "mechanism-animations.js"], { stdio: "inherit" });
 execFileSync(process.execPath, ["--check", "acceptance.test.js"], { stdio: "inherit" });
 
 const html = fs.readFileSync("index.html", "utf8");
@@ -21,15 +24,16 @@ const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
 
 [
   '<meta name="viewport"',
-  'id="sequenceInput"',
-  'id="calculateButton"',
-  'id="copyReport"',
+  'id="seqInput"',
+  'id="btnCalc"',
+  'id="btnCopy"',
   'id="exampleSelect"',
-  'id="reportProfile"',
-  'id="kaiserPhotoInput"',
-  'id="deltaMassInput"',
-  'id="sideReactionMatches"',
+  'id="kaiserPhoto"',
+  'id="deltaInput"',
+  'id="deltaResults"',
   'side-reactions-data.js',
+  'impurity-data.js',
+  'mechanism-animations.js',
 ].forEach((needle) => {
   if (!html.includes(needle)) {
     throw new Error(`HTML lint failed: missing ${needle}`);
@@ -40,7 +44,8 @@ const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
   "prefers-color-scheme: dark",
   '[data-theme="light"]',
   '[data-theme="dark"]',
-  "@media (max-width: 720px)",
+  "@media (min-width: 720px)",
+  "@media (max-width: 520px)",
 ].forEach((needle) => {
   if (!css.includes(needle)) {
     throw new Error(`CSS lint failed: missing ${needle}`);
@@ -55,7 +60,6 @@ const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
   "Invalid sequence separator",
   "chemistryLibrary",
   "peptideTemplates",
-  "reportProfiles",
 ].forEach((needle) => {
   if (!js.includes(needle) && !data.includes(needle) && !sideData.includes(needle)) {
     throw new Error(`JS lint failed: missing friendly error text ${needle}`);
@@ -64,7 +68,7 @@ const sideData = fs.readFileSync("side-reactions-data.js", "utf8");
 
 [
   "sideReactionMassDeltas",
-  "Aspartimide/glutarimide formation",
+  "Aspartimide/Glutarimide formation",
   "Pbf derivatization",
 ].forEach((needle) => {
   if (!sideData.includes(needle)) {
